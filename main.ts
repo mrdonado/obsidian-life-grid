@@ -931,6 +931,19 @@ class LifeGridView extends ItemView {
 				height: number;
 			}> = [];
 
+			// Draw ghost period background - a subtle grey background covering the entire timeline
+			const ghostPeriodRect = document.createElementNS(
+				"http://www.w3.org/2000/svg",
+				"rect"
+			);
+			ghostPeriodRect.setAttribute("x", "0");
+			ghostPeriodRect.setAttribute("y", "10"); // Match the margin
+			ghostPeriodRect.setAttribute("width", gap.toString());
+			ghostPeriodRect.setAttribute("height", "100%");
+			ghostPeriodRect.setAttribute("fill", "#555"); // Slightly lighter than background
+			ghostPeriodRect.setAttribute("opacity", "0.3");
+			minimapSvg.appendChild(ghostPeriodRect);
+
 			for (const period of periods) {
 				// Calculate start position
 				const periodStartDate = new Date(period.start);
