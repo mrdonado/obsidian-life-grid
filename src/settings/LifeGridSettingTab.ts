@@ -115,7 +115,12 @@ export class LifeGridSettingTab extends PluginSettingTab {
 			const periods = this.plugin.settings.periods || [];
 
 			periods.forEach((period, index) => {
-				this.renderPeriodDiv(periodsContainer, period, index, renderPeriods);
+				this.renderPeriodDiv(
+					periodsContainer,
+					period,
+					index,
+					renderPeriods
+				);
 			});
 
 			this.renderAddPeriodButton(periodsContainer, renderPeriods);
@@ -127,9 +132,9 @@ export class LifeGridSettingTab extends PluginSettingTab {
 	}
 
 	private renderPeriodDiv(
-		container: HTMLElement, 
-		period: any, 
-		index: number, 
+		container: HTMLElement,
+		period: any,
+		index: number,
 		renderPeriods: () => void
 	): void {
 		const periodDiv = container.createEl("div");
@@ -141,15 +146,15 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 		// Period header with label and delete button
 		this.renderPeriodHeader(periodDiv, period, index, renderPeriods);
-		
+
 		// Period settings
 		this.renderPeriodSettings(periodDiv, period, index, renderPeriods);
 	}
 
 	private renderPeriodHeader(
-		periodDiv: HTMLElement, 
-		period: any, 
-		index: number, 
+		periodDiv: HTMLElement,
+		period: any,
+		index: number,
 		renderPeriods: () => void
 	): void {
 		const headerDiv = periodDiv.createEl("div");
@@ -176,9 +181,9 @@ export class LifeGridSettingTab extends PluginSettingTab {
 	}
 
 	private renderPeriodSettings(
-		periodDiv: HTMLElement, 
-		period: any, 
-		index: number, 
+		periodDiv: HTMLElement,
+		period: any,
+		index: number,
 		renderPeriods: () => void
 	): void {
 		// Label setting
@@ -244,7 +249,10 @@ export class LifeGridSettingTab extends PluginSettingTab {
 			});
 	}
 
-	private renderAddPeriodButton(container: HTMLElement, renderPeriods: () => void): void {
+	private renderAddPeriodButton(
+		container: HTMLElement,
+		renderPeriods: () => void
+	): void {
 		const addButton = container.createEl("button");
 		addButton.textContent = "+ Add New Period";
 		addButton.className = "mod-cta";
@@ -266,7 +274,10 @@ export class LifeGridSettingTab extends PluginSettingTab {
 		};
 	}
 
-	private renderAdvancedJsonEditor(container: HTMLElement, renderPeriods: () => void): void {
+	private renderAdvancedJsonEditor(
+		container: HTMLElement,
+		renderPeriods: () => void
+	): void {
 		const advancedDiv = container.createEl("div");
 		advancedDiv.style.marginTop = Theme.ADVANCED_SECTION_MARGIN_TOP;
 
@@ -297,7 +308,10 @@ export class LifeGridSettingTab extends PluginSettingTab {
 		};
 	}
 
-	private renderJsonEditor(container: HTMLElement, renderPeriods: () => void): void {
+	private renderJsonEditor(
+		container: HTMLElement,
+		renderPeriods: () => void
+	): void {
 		container.empty();
 
 		new Setting(container)
@@ -320,7 +334,8 @@ export class LifeGridSettingTab extends PluginSettingTab {
 							renderPeriods();
 						} catch (e) {
 							// Show error in a subtle way
-							text.inputEl.style.borderColor = "var(--text-error)";
+							text.inputEl.style.borderColor =
+								"var(--text-error)";
 							setTimeout(() => {
 								text.inputEl.style.borderColor = "";
 							}, 2000);

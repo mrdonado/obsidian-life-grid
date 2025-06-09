@@ -1,16 +1,10 @@
-import {
-	App,
-	TFile,
-	Plugin,
-	ItemView,
-	WorkspaceLeaf,
-} from "obsidian";
+import { App, TFile, Plugin, ItemView, WorkspaceLeaf } from "obsidian";
 import * as Theme from "./theme";
 import { LifeGridSettingTab } from "./src/settings/LifeGridSettingTab";
-import { 
-	LifeGridSettings, 
-	DEFAULT_SETTINGS, 
-	LIFE_GRID_VIEW_TYPE 
+import {
+	LifeGridSettings,
+	DEFAULT_SETTINGS,
+	LIFE_GRID_VIEW_TYPE,
 } from "./src/types/Settings";
 
 class LifeGridView extends ItemView {
