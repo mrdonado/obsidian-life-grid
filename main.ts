@@ -1621,12 +1621,16 @@ export default class LifeGridPlugin extends Plugin {
 			// Always get a leaf in the main panel (not sidebar panels)
 			// This ensures the Life Grid opens in the main editing area
 			const activeLeaf = workspace.activeLeaf;
-			
+
 			// Check if the active leaf is in the main panel and is replaceable
 			if (activeLeaf && activeLeaf.parent === workspace.rootSplit) {
 				const currentView = activeLeaf.view;
 				// Only replace if it's a file view or empty view, not special views
-				if (currentView && (currentView.getViewType() === "empty" || "file" in currentView)) {
+				if (
+					currentView &&
+					(currentView.getViewType() === "empty" ||
+						"file" in currentView)
+				) {
 					leaf = activeLeaf;
 					await leaf.setViewState({
 						type: LIFE_GRID_VIEW_TYPE,
