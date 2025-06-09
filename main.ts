@@ -1,9 +1,18 @@
-import { App, TFile, Plugin, PluginSettingTab, Setting } from "obsidian";
-import { ItemView, WorkspaceLeaf } from "obsidian";
+import {
+	App,
+	TFile,
+	Plugin,
+	PluginSettingTab,
+	Setting,
+	ItemView,
+	WorkspaceLeaf,
+} from "obsidian";
 
 interface LifeGridSettings {
 	birthday?: string; // ISO date string
 	maxAge?: number; // Maximum age to display in years (default: 95)
+	dailyNoteFormat?: string; // Date format for daily notes (default: YYYY-MM-DD)
+	dailyNoteFolder?: string; // Folder path for daily notes (default: "" - root)
 	periods?: Array<{
 		start: string;
 		end: string;
@@ -15,6 +24,8 @@ interface LifeGridSettings {
 const DEFAULT_SETTINGS: LifeGridSettings = {
 	birthday: "",
 	maxAge: 95,
+	dailyNoteFormat: "YYYY-MM-DD", // Obsidian's default format
+	dailyNoteFolder: "", // Obsidian's default (root of vault)
 	periods: [],
 };
 
@@ -66,6 +77,67 @@ class LifeGridView extends ItemView {
 		};
 	}
 
+	/**
+	 * Convert a date format string (e.g., "YYYY-MM-DD") to a regex pattern
+	 */
+	private formatToRegex(format: string): RegExp {
+		// Escape special regex characters except for our placeholders
+		let pattern = format.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+		// Replace date format tokens with regex patterns
+		pattern = pattern
+			.replace(/YYYY/g, "\\d{4}")
+			.replace(/YY/g, "\\d{2}")
+			.replace(/MM/g, "\\d{2}")
+			.replace(/DD/g, "\\d{2}")
+			.replace(/M/g, "\\d{1,2}")
+			.replace(/D/g, "\\d{1,2}");
+
+		return new RegExp(`^${pattern}$`);
+	}
+
+	/**
+	 * Check if a file is in the configured daily notes folder
+	 * Uses recursive search: empty folder setting searches entire vault,
+	 * specific folder setting searches within that folder and all subfolders
+	 */
+	private isInDailyNotesFolder(
+		file: TFile,
+		dailyNoteFolder: string
+	): boolean {
+		// Handle root folder cases: empty string or just "/"
+		if (!dailyNoteFolder || dailyNoteFolder === "/") {
+			// Root of vault - search recursively throughout entire vault
+			return true;
+		}
+
+		// For specific folder, search recursively within that folder and its subfolders
+		// Ensure folder path ends with '/' for proper prefix matching
+		const folderPath = dailyNoteFolder.endsWith("/")
+			? dailyNoteFolder
+			: dailyNoteFolder + "/";
+		return file.path.startsWith(folderPath);
+	}
+
+	/**
+	 * Generate the full file path for a daily note based on configured format and folder
+	 */
+	private getDailyNoteFilePath(dateString: string): string {
+		const dailyNoteFolder = this.plugin.settings.dailyNoteFolder || "";
+
+		// Handle root folder cases: empty string or just "/"
+		if (!dailyNoteFolder || dailyNoteFolder === "/") {
+			// Root of vault
+			return `${dateString}.md`;
+		}
+
+		// Ensure folder path ends with '/' for proper path construction
+		const folderPath = dailyNoteFolder.endsWith("/")
+			? dailyNoteFolder
+			: dailyNoteFolder + "/";
+		return `${folderPath}${dateString}.md`;
+	}
+
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		container.empty();
@@ -91,12 +163,32 @@ class LifeGridView extends ItemView {
 		const today = new Date();
 		today.setHours(0, 0, 0, 0); // Force today to midnight local time
 
-		// Get all daily notes (YYYY-MM-DD.md or .md files)
+		// Get all daily notes using configurable format and folder
 		const files = this.plugin.app.vault.getFiles();
 		const dailyNoteSet = new Set<string>();
+		const dailyNoteFormat =
+			this.plugin.settings.dailyNoteFormat || "YYYY-MM-DD";
+		const dailyNoteFolder = this.plugin.settings.dailyNoteFolder || "";
+		const formatRegex = this.formatToRegex(dailyNoteFormat);
+
+		let filesChecked = 0;
+		let filesInFolder = 0;
+		let filesMatchingFormat = 0;
+
 		for (const file of files) {
-			const match = file.basename.match(/^\d{4}-\d{2}-\d{2}$/);
-			if (match) dailyNoteSet.add(file.basename);
+			filesChecked++;
+
+			// Check if file is in the correct folder
+			const isInFolder = this.isInDailyNotesFolder(file, dailyNoteFolder);
+			if (isInFolder) {
+				filesInFolder++;
+				// Check if filename matches the date format
+				const match = file.basename.match(formatRegex);
+				if (match) {
+					filesMatchingFormat++;
+					dailyNoteSet.add(file.basename);
+				}
+			}
 		}
 
 		// Prepare periods
@@ -173,19 +265,23 @@ class LifeGridView extends ItemView {
 		// Map day string to custom color from frontmatter
 		const dayToColor: { [key: string]: string } = {};
 		for (const file of files) {
-			const match = file.basename.match(/^\d{4}-\d{2}-\d{2}$/);
-			if (match) {
-				dayToFilePath[file.basename] = file.path;
-				// Try to extract color from frontmatter if present
-				const fileCache = this.plugin.app.metadataCache.getCache(
-					file.path
-				);
-				if (
-					fileCache &&
-					fileCache.frontmatter &&
-					typeof fileCache.frontmatter["color"] === "string"
-				) {
-					dayToColor[file.basename] = fileCache.frontmatter["color"];
+			// Check if file is in the correct folder and matches the format
+			if (this.isInDailyNotesFolder(file, dailyNoteFolder)) {
+				const match = file.basename.match(formatRegex);
+				if (match) {
+					dayToFilePath[file.basename] = file.path;
+					// Try to extract color from frontmatter if present
+					const fileCache = this.plugin.app.metadataCache.getCache(
+						file.path
+					);
+					if (
+						fileCache &&
+						fileCache.frontmatter &&
+						typeof fileCache.frontmatter["color"] === "string"
+					) {
+						dayToColor[file.basename] =
+							fileCache.frontmatter["color"];
+					}
 				}
 			}
 		}
@@ -1116,16 +1212,13 @@ class LifeGridView extends ItemView {
 
 					// Hide tooltip when hovering over it
 					const currentTooltipDiv = tooltipDiv;
-					tooltipDiv.addEventListener(
-						"mouseenter",
-						() => {
-							currentTooltipDiv.remove();
-							if (tooltipDiv === currentTooltipDiv) {
-								tooltipDiv = null;
-							}
-							minimapSvg.style.cursor = "default";
+					tooltipDiv.addEventListener("mouseenter", () => {
+						currentTooltipDiv.remove();
+						if (tooltipDiv === currentTooltipDiv) {
+							tooltipDiv = null;
 						}
-					);
+						minimapSvg.style.cursor = "default";
+					});
 				}
 
 				// Calculate age based on Y position
@@ -1242,10 +1335,7 @@ class LifeGridView extends ItemView {
 
 				// Position tooltip to the left of minimap
 				tooltipDiv.style.left =
-					e.clientX -
-					(tooltipDiv.offsetWidth || 200) -
-					16 +
-					"px";
+					e.clientX - (tooltipDiv.offsetWidth || 200) - 16 + "px";
 				tooltipDiv.style.top = e.clientY + 8 + "px";
 			});
 
@@ -1333,7 +1423,7 @@ class LifeGridView extends ItemView {
 								// Create new file and open in current tab
 								const newFile =
 									await this.plugin.app.vault.create(
-										event.date + ".md",
+										this.getDailyNoteFilePath(event.date),
 										`# ${event.date}\n`
 									);
 								await this.leaf.openFile(newFile);
@@ -1408,7 +1498,7 @@ class LifeGridView extends ItemView {
 					} else {
 						// Create new file
 						const newFile = await this.plugin.app.vault.create(
-							day.date + ".md",
+							this.getDailyNoteFilePath(day.date),
 							`# ${day.date}\n`
 						);
 						if (e.button === 1) {
@@ -1616,6 +1706,45 @@ class LifeGridSettingTab extends PluginSettingTab {
 							this.plugin.settings.maxAge = maxAge;
 							await this.plugin.saveSettings();
 						}
+					});
+			});
+
+		// Daily Notes Section
+		containerEl.createEl("h3", { text: "Daily Notes Configuration" });
+		containerEl.createEl("p", {
+			text: "Configure how daily notes are detected and created. These settings should match your Obsidian daily notes plugin configuration.",
+		});
+
+		// Daily notes format setting
+		new Setting(containerEl)
+			.setName("Daily Note Format")
+			.setDesc(
+				"Date format pattern for daily note filenames (e.g., YYYY-MM-DD, YYYY_MM_DD, DD-MM-YYYY)"
+			)
+			.addText((text) => {
+				text.setPlaceholder("YYYY-MM-DD")
+					.setValue(
+						this.plugin.settings.dailyNoteFormat || "YYYY-MM-DD"
+					)
+					.onChange(async (value) => {
+						this.plugin.settings.dailyNoteFormat =
+							value || "YYYY-MM-DD";
+						await this.plugin.saveSettings();
+					});
+			});
+
+		// Daily notes folder setting
+		new Setting(containerEl)
+			.setName("Daily Notes Folder")
+			.setDesc(
+				"Folder path where daily notes are stored. Leave empty for vault root, or specify folder like 'Daily Notes' or 'Journal/Daily'. The plugin will search this folder and all subfolders for daily notes."
+			)
+			.addText((text) => {
+				text.setPlaceholder("e.g., Daily Notes")
+					.setValue(this.plugin.settings.dailyNoteFolder || "")
+					.onChange(async (value) => {
+						this.plugin.settings.dailyNoteFolder = value || "";
+						await this.plugin.saveSettings();
 					});
 			});
 
