@@ -919,6 +919,20 @@ class LifeGridView extends ItemView {
 
 			// Draw life periods background first
 			// const periodLineWidth = 3; // This will now use the 'gap' variable for thickness
+
+			// Store period rectangles for hover detection
+			const minimapPeriods: Array<{
+				period: {
+					start: string;
+					end: string;
+					color: string;
+					label?: string;
+				};
+				startY: number;
+				endY: number;
+				height: number;
+			}> = [];
+
 			for (const period of periods) {
 				// Calculate start position
 				const periodStartDate = new Date(period.start);
@@ -965,6 +979,14 @@ class LifeGridView extends ItemView {
 					periodRect.setAttribute("fill", period.color);
 					periodRect.setAttribute("opacity", "0.8"); // Opacity can be adjusted
 					minimapSvg.appendChild(periodRect);
+
+					// Store for hover detection
+					minimapPeriods.push({
+						period: period,
+						startY: startY,
+						endY: endY,
+						height: height,
+					});
 				}
 			}
 
@@ -1065,91 +1087,223 @@ class LifeGridView extends ItemView {
 			// Add hover functionality to minimap
 			minimapSvg.addEventListener("mousemove", (e: MouseEvent) => {
 				const rect = minimapSvg.getBoundingClientRect();
+				const mx = e.clientX - rect.left;
 				const my = e.clientY - rect.top;
 
 				let found = false;
-				for (const event of minimapEvents) {
-					if (my >= event.y && my <= event.y + event.height) {
-						minimapSvg.style.cursor = "pointer";
 
-						// Show tooltip for minimap
-						if (!tooltipDiv) {
-							tooltipDiv = document.createElement("div");
-							tooltipDiv.style.position = "fixed";
-							tooltipDiv.style.pointerEvents = "auto";
-							tooltipDiv.style.background = TOOLTIP_BG_COLOR;
-							tooltipDiv.style.padding = TOOLTIP_PADDING;
-							tooltipDiv.style.borderRadius =
-								TOOLTIP_BORDER_RADIUS;
-							tooltipDiv.style.fontSize = TOOLTIP_FONT_SIZE;
-							tooltipDiv.style.fontWeight = "bold";
-							tooltipDiv.style.zIndex = "9999";
-							document.body.appendChild(tooltipDiv);
+				// Check for period rectangles first (they are on the left side, x=0 to gap)
+				if (mx >= 0 && mx <= gap) {
+					for (const periodData of minimapPeriods) {
+						if (my >= periodData.startY && my <= periodData.endY) {
+							minimapSvg.style.cursor = "pointer";
 
-							// Hide tooltip when hovering over it - capture current tooltip reference
-							const currentTooltipDiv = tooltipDiv;
-							tooltipDiv.addEventListener("mouseenter", () => {
-								currentTooltipDiv.remove();
-								if (tooltipDiv === currentTooltipDiv) {
-									tooltipDiv = null;
-								}
-								minimapSvg.style.cursor = "default";
-							});
-						}
-
-						// Calculate age for this event
-						const eventDate = new Date(event.date);
-						const age = calculateAge(startDate, eventDate);
-
-						tooltipDiv.textContent = `${age}yo ${event.date} — ${event.eventName}`;
-
-						// Apply same color logic as main grid
-						if (
-							event.color !== TOOLTIP_TEXT_COLOR &&
-							event.color !== SQUARE_DEFAULT_COLOR
-						) {
-							// The local getLuminance and colorToHex function definitions that were here have been removed.
-							// Calls will now use the versions from the onOpen scope.
-
-							const normalizedColor = colorToHex(event.color);
-							const isLight = getLuminance(normalizedColor) > 0.5;
-							const isVeryDark =
-								getLuminance(normalizedColor) < 0.08;
-
-							if (isVeryDark) {
+							// Show tooltip for period
+							if (!tooltipDiv) {
+								tooltipDiv = document.createElement("div");
+								tooltipDiv.style.position = "fixed";
+								tooltipDiv.style.pointerEvents = "auto";
 								tooltipDiv.style.background = TOOLTIP_BG_COLOR;
-								tooltipDiv.style.color = "#fff";
-							} else if (isLight) {
-								tooltipDiv.style.color = normalizedColor;
-								tooltipDiv.style.background = TOOLTIP_BG_COLOR;
-							} else {
-								const contrastWhite =
-									(getLuminance("#fff") + 0.05) /
-									(getLuminance(normalizedColor) + 0.05);
-								const contrastBlack =
-									(getLuminance(normalizedColor) + 0.05) /
-									(getLuminance("#000") + 0.05);
-								tooltipDiv.style.background = normalizedColor;
-								tooltipDiv.style.color =
-									contrastWhite >= contrastBlack
-										? "#fff"
-										: "#000";
+								tooltipDiv.style.padding = TOOLTIP_PADDING;
+								tooltipDiv.style.borderRadius =
+									TOOLTIP_BORDER_RADIUS;
+								tooltipDiv.style.fontSize = TOOLTIP_FONT_SIZE;
+								tooltipDiv.style.fontWeight = "bold";
+								tooltipDiv.style.zIndex = "9999";
+								document.body.appendChild(tooltipDiv);
+
+								// Hide tooltip when hovering over it
+								const currentTooltipDiv = tooltipDiv;
+								tooltipDiv.addEventListener(
+									"mouseenter",
+									() => {
+										currentTooltipDiv.remove();
+										if (tooltipDiv === currentTooltipDiv) {
+											tooltipDiv = null;
+										}
+										minimapSvg.style.cursor = "default";
+									}
+								);
 							}
-						} else {
-							tooltipDiv.style.color = TOOLTIP_TEXT_COLOR;
-							tooltipDiv.style.background = TOOLTIP_BG_COLOR;
+
+							// Calculate start and end ages for the period
+							const periodStartDate = new Date(
+								periodData.period.start
+							);
+							const startAge = calculateAge(
+								startDate,
+								periodStartDate
+							);
+
+							let endAge: string;
+							let endDateStr: string;
+							if (
+								periodData.period.end.trim() === "" ||
+								periodData.period.end.toLowerCase() ===
+									"present"
+							) {
+								endAge = calculateAge(startDate, today);
+								endDateStr = "present";
+							} else {
+								const periodEndDate = new Date(
+									periodData.period.end
+								);
+								endAge = calculateAge(startDate, periodEndDate);
+								endDateStr = periodData.period.end;
+							}
+
+							// Build tooltip text
+							const periodLabel =
+								periodData.period.label || "Unnamed Period";
+							tooltipDiv.textContent = `${periodLabel} — ${startAge}yo to ${endAge}yo (${periodData.period.start} to ${endDateStr})`;
+
+							// Apply period color styling
+							if (
+								periodData.period.color !==
+									TOOLTIP_TEXT_COLOR &&
+								periodData.period.color !== SQUARE_DEFAULT_COLOR
+							) {
+								const normalizedColor = colorToHex(
+									periodData.period.color
+								);
+								const isLight =
+									getLuminance(normalizedColor) > 0.5;
+								const isVeryDark =
+									getLuminance(normalizedColor) < 0.08;
+
+								if (isVeryDark) {
+									tooltipDiv.style.background =
+										TOOLTIP_BG_COLOR;
+									tooltipDiv.style.color = "#fff";
+								} else if (isLight) {
+									tooltipDiv.style.color = normalizedColor;
+									tooltipDiv.style.background =
+										TOOLTIP_BG_COLOR;
+								} else {
+									const contrastWhite =
+										(getLuminance("#fff") + 0.05) /
+										(getLuminance(normalizedColor) + 0.05);
+									const contrastBlack =
+										(getLuminance(normalizedColor) + 0.05) /
+										(getLuminance("#000") + 0.05);
+									tooltipDiv.style.background =
+										normalizedColor;
+									tooltipDiv.style.color =
+										contrastWhite >= contrastBlack
+											? "#fff"
+											: "#000";
+								}
+							} else {
+								tooltipDiv.style.color = TOOLTIP_TEXT_COLOR;
+								tooltipDiv.style.background = TOOLTIP_BG_COLOR;
+							}
+
+							// Position tooltip to the left of minimap
+							tooltipDiv.style.left =
+								e.clientX -
+								(tooltipDiv.offsetWidth || 200) -
+								16 +
+								"px";
+							tooltipDiv.style.top = e.clientY + 8 + "px";
+
+							found = true;
+							break;
 						}
+					}
+				}
 
-						// Position tooltip to the left of minimap
-						tooltipDiv.style.left =
-							e.clientX -
-							(tooltipDiv.offsetWidth || 120) -
-							16 +
-							"px";
-						tooltipDiv.style.top = e.clientY + 8 + "px";
+				// If no period found, check for events (they are on the right side)
+				if (!found) {
+					for (const event of minimapEvents) {
+						if (my >= event.y && my <= event.y + event.height) {
+							minimapSvg.style.cursor = "pointer";
 
-						found = true;
-						break;
+							// Show tooltip for minimap
+							if (!tooltipDiv) {
+								tooltipDiv = document.createElement("div");
+								tooltipDiv.style.position = "fixed";
+								tooltipDiv.style.pointerEvents = "auto";
+								tooltipDiv.style.background = TOOLTIP_BG_COLOR;
+								tooltipDiv.style.padding = TOOLTIP_PADDING;
+								tooltipDiv.style.borderRadius =
+									TOOLTIP_BORDER_RADIUS;
+								tooltipDiv.style.fontSize = TOOLTIP_FONT_SIZE;
+								tooltipDiv.style.fontWeight = "bold";
+								tooltipDiv.style.zIndex = "9999";
+								document.body.appendChild(tooltipDiv);
+
+								// Hide tooltip when hovering over it - capture current tooltip reference
+								const currentTooltipDiv = tooltipDiv;
+								tooltipDiv.addEventListener(
+									"mouseenter",
+									() => {
+										currentTooltipDiv.remove();
+										if (tooltipDiv === currentTooltipDiv) {
+											tooltipDiv = null;
+										}
+										minimapSvg.style.cursor = "default";
+									}
+								);
+							}
+
+							// Calculate age for this event
+							const eventDate = new Date(event.date);
+							const age = calculateAge(startDate, eventDate);
+
+							tooltipDiv.textContent = `${age}yo ${event.date} — ${event.eventName}`;
+
+							// Apply same color logic as main grid
+							if (
+								event.color !== TOOLTIP_TEXT_COLOR &&
+								event.color !== SQUARE_DEFAULT_COLOR
+							) {
+								// The local getLuminance and colorToHex function definitions that were here have been removed.
+								// Calls will now use the versions from the onOpen scope.
+
+								const normalizedColor = colorToHex(event.color);
+								const isLight =
+									getLuminance(normalizedColor) > 0.5;
+								const isVeryDark =
+									getLuminance(normalizedColor) < 0.08;
+
+								if (isVeryDark) {
+									tooltipDiv.style.background =
+										TOOLTIP_BG_COLOR;
+									tooltipDiv.style.color = "#fff";
+								} else if (isLight) {
+									tooltipDiv.style.color = normalizedColor;
+									tooltipDiv.style.background =
+										TOOLTIP_BG_COLOR;
+								} else {
+									const contrastWhite =
+										(getLuminance("#fff") + 0.05) /
+										(getLuminance(normalizedColor) + 0.05);
+									const contrastBlack =
+										(getLuminance(normalizedColor) + 0.05) /
+										(getLuminance("#000") + 0.05);
+									tooltipDiv.style.background =
+										normalizedColor;
+									tooltipDiv.style.color =
+										contrastWhite >= contrastBlack
+											? "#fff"
+											: "#000";
+								}
+							} else {
+								tooltipDiv.style.color = TOOLTIP_TEXT_COLOR;
+								tooltipDiv.style.background = TOOLTIP_BG_COLOR;
+							}
+
+							// Position tooltip to the left of minimap
+							tooltipDiv.style.left =
+								e.clientX -
+								(tooltipDiv.offsetWidth || 120) -
+								16 +
+								"px";
+							tooltipDiv.style.top = e.clientY + 8 + "px";
+
+							found = true;
+							break;
+						}
 					}
 				}
 
