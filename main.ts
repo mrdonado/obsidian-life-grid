@@ -1,5 +1,5 @@
 import { App, TFile, Plugin, ItemView, WorkspaceLeaf } from "obsidian";
-import * as Theme from "./theme";
+import * as Theme from "./src/theme";
 import { LifeGridSettingTab } from "./src/settings/LifeGridSettingTab";
 import {
 	LifeGridSettings,

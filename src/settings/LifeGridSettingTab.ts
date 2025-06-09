@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting, Plugin } from "obsidian";
-import * as Theme from "../../theme";
+import * as Theme from "../theme";
 import type { LifeGridSettings } from "../types/Settings";
 
 interface LifeGridPlugin extends Plugin {
