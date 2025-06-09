@@ -1,8 +1,6 @@
 import { App, TFile, Plugin, PluginSettingTab, Setting } from "obsidian";
 import { ItemView, WorkspaceLeaf } from "obsidian";
 
-// Remember to rename these classes and interfaces!
-
 interface LifeGridSettings {
 	birthday?: string; // ISO date string
 	maxAge?: number; // Maximum age to display in years (default: 95)
@@ -1330,9 +1328,47 @@ class LifeGridView extends ItemView {
 
 			minimapSvg.addEventListener("click", async (e: MouseEvent) => {
 				const rect = minimapSvg.getBoundingClientRect();
+				const mx = e.clientX - rect.left;
 				const my = e.clientY - rect.top;
 				const currentTime = Date.now();
 
+				// Check for period clicks first (they are on the left side, x=0 to gap)
+				if (mx >= 0 && mx <= gap) {
+					for (const periodData of minimapPeriods) {
+						if (my >= periodData.startY && my <= periodData.endY) {
+							// Clean up any existing tooltips before navigation
+							if (tooltipDiv) {
+								tooltipDiv.remove();
+								tooltipDiv = null;
+								minimapSvg.style.cursor = "default";
+							}
+
+							// Scroll to the start of the period in the main grid
+							const periodStartDate = new Date(
+								periodData.period.start
+							);
+							const startDateString = periodStartDate
+								.toISOString()
+								.split("T")[0];
+
+							if (dayToRect[startDateString]) {
+								const { cx, cy } = dayToRect[startDateString];
+								const scrollX =
+									cx - scrollWrapper.clientWidth / 2;
+								const scrollY =
+									cy - scrollWrapper.clientHeight / 2;
+								scrollWrapper.scrollTo({
+									top: Math.max(0, scrollY),
+									left: Math.max(0, scrollX),
+									behavior: "smooth",
+								});
+							}
+							return; // Exit early, don't check for events
+						}
+					}
+				}
+
+				// Check for event clicks (they are on the right side)
 				for (const event of minimapEvents) {
 					if (my >= event.y && my <= event.y + event.height) {
 						// Check if this is a second click on the same event within the threshold
