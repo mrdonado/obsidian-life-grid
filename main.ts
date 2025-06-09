@@ -248,6 +248,24 @@ class LifeGridView extends ItemView {
 			return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
 		}
 
+		// Helper to convert color names/rgb to hex (this might have been added previously with a faulty regex)
+		function colorToHex(color: string): string {
+			const div = document.createElement("div");
+			div.style.color = color;
+			document.body.appendChild(div);
+			const computedColor = window.getComputedStyle(div).color;
+			document.body.removeChild(div);
+
+			const match = computedColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+			if (match) {
+				const r = parseInt(match[1]).toString(16).padStart(2, "0");
+				const g = parseInt(match[2]).toString(16).padStart(2, "0");
+				const b = parseInt(match[3]).toString(16).padStart(2, "0");
+				return `#${r}${g}${b}`;
+			}
+			return color; // Fallback if regex doesn't match or color is already hex
+		}
+
 		// Helper to adjust color brightness
 		function adjustColor(hex: string, amount: number): string {
 			hex = hex.replace("#", "");
@@ -800,44 +818,14 @@ class LifeGridView extends ItemView {
 			tooltip.textContent = tooltipText;
 
 			// Set tooltip color based on day color
-			function getLuminance(hex: string) {
-				hex = hex.replace("#", "");
-				if (hex.length === 3) {
-					hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-				}
-				const r = parseInt(hex.substr(0, 2), 16) / 255;
-				const g = parseInt(hex.substr(2, 2), 16) / 255;
-				const b = parseInt(hex.substr(4, 2), 16) / 255;
-				const a = [r, g, b].map((v) =>
-					v <= 0.03928
-						? v / 12.92
-						: Math.pow((v + 0.055) / 1.055, 2.4)
-				);
-				return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
-			}
+			// Ensure local/shadowed versions of getLuminance and colorToHex are removed from this event listener's scope.
+			// The calls below should now use the correctly typed functions from the onOpen scope.
 
-			function colorToHex(color: string): string {
-				const div = document.createElement("div");
-				div.style.color = color;
-				document.body.appendChild(div);
-				const computedColor = window.getComputedStyle(div).color;
-				document.body.removeChild(div);
+			const normalizedColor = colorToHex(hoveredDay.color); // Uses onOpen-scoped colorToHex
+			const luminanceValue = getLuminance(normalizedColor); // Uses onOpen-scoped getLuminance
 
-				const match = computedColor.match(
-					/rgba?\((\d+),\s*(\d+),\s*(\d+)/
-				);
-				if (match) {
-					const r = parseInt(match[1]).toString(16).padStart(2, "0");
-					const g = parseInt(match[2]).toString(16).padStart(2, "0");
-					const b = parseInt(match[3]).toString(16).padStart(2, "0");
-					return `#${r}${g}${b}`;
-				}
-				return color;
-			}
-
-			const normalizedColor = colorToHex(hoveredDay.color);
-			const isLight = getLuminance(normalizedColor) > 0.5;
-			const isVeryDark = getLuminance(normalizedColor) < 0.08;
+			const isLight = luminanceValue > 0.5;
+			const isVeryDark = luminanceValue < 0.08;
 
 			if (isVeryDark) {
 				tooltip.style.background = TOOLTIP_BG_COLOR;
@@ -846,12 +834,13 @@ class LifeGridView extends ItemView {
 				tooltip.style.color = normalizedColor;
 				tooltip.style.background = TOOLTIP_BG_COLOR;
 			} else {
+				const whiteLuminance = getLuminance("#fff"); // Uses onOpen-scoped getLuminance
+				const blackLuminance = getLuminance("#000"); // Uses onOpen-scoped getLuminance
+
 				const contrastWhite =
-					(getLuminance("#fff") + 0.05) /
-					(getLuminance(normalizedColor) + 0.05);
+					(whiteLuminance + 0.05) / (luminanceValue + 0.05);
 				const contrastBlack =
-					(getLuminance(normalizedColor) + 0.05) /
-					(getLuminance("#000") + 0.05);
+					(luminanceValue + 0.05) / (blackLuminance + 0.05);
 				tooltip.style.background = normalizedColor;
 				tooltip.style.color =
 					contrastWhite >= contrastBlack ? "#fff" : "#000";
@@ -931,7 +920,58 @@ class LifeGridView extends ItemView {
 			const totalLifeDays = (this.plugin.settings.maxAge || 95) * 365.25; // Include leap years
 			const usableHeight = minimapHeight - 20; // Leave 10px margin top and bottom
 
-			// Draw decade markers (subtle background lines)
+			// Draw life periods background first
+			// const periodLineWidth = 3; // This will now use the 'gap' variable for thickness
+			for (const period of periods) {
+				// Calculate start position
+				const periodStartDate = new Date(period.start);
+				const startDaysSinceBirth = Math.round(
+					(periodStartDate.getTime() - startDate.getTime()) /
+						(1000 * 60 * 60 * 24)
+				);
+				const startProgress =
+					Math.max(0, startDaysSinceBirth) / totalLifeDays;
+
+				// Calculate end position
+				let periodEndDate: Date;
+				if (
+					period.end.trim() === "" ||
+					period.end.toLowerCase() === "present"
+				) {
+					periodEndDate = today;
+				} else {
+					periodEndDate = new Date(period.end);
+				}
+				const endDaysSinceBirth = Math.round(
+					(periodEndDate.getTime() - startDate.getTime()) /
+						(1000 * 60 * 60 * 24)
+				);
+				const endProgress = Math.min(
+					1,
+					endDaysSinceBirth / totalLifeDays
+				);
+
+				// Only draw if the period is within our timeline
+				if (startProgress <= 1 && endProgress >= 0) {
+					const startY = 10 + startProgress * usableHeight;
+					const endY = 10 + endProgress * usableHeight;
+					const height = Math.max(1, endY - startY); // Ensure minimum height of 1px
+
+					const periodRect = document.createElementNS(
+						"http://www.w3.org/2000/svg",
+						"rect"
+					);
+					periodRect.setAttribute("x", "0"); // Position line on the left
+					periodRect.setAttribute("y", startY.toString());
+					periodRect.setAttribute("width", gap.toString()); // Set line width to the 'gap' value
+					periodRect.setAttribute("height", height.toString());
+					periodRect.setAttribute("fill", period.color);
+					periodRect.setAttribute("opacity", "0.8"); // Opacity can be adjusted
+					minimapSvg.appendChild(periodRect);
+				}
+			}
+
+			// Draw decade markers (subtle background lines) on top of periods
 			for (let decade = 0; decade <= 90; decade += 10) {
 				const decadeProgress = (decade * 365.25) / totalLifeDays;
 				const y = 10 + decadeProgress * usableHeight;
@@ -939,7 +979,7 @@ class LifeGridView extends ItemView {
 					"http://www.w3.org/2000/svg",
 					"line"
 				);
-				line.setAttribute("x1", "0");
+				line.setAttribute("x1", gap.toString()); // Start after the period lines area
 				line.setAttribute("y1", y.toString());
 				line.setAttribute("x2", minimapWidth.toString());
 				line.setAttribute("y2", y.toString());
@@ -1001,14 +1041,14 @@ class LifeGridView extends ItemView {
 				// Calculate proportional position within the configurable timeline
 				const lifeProgress = event.daysSinceBirth / totalLifeDays;
 				const y = 10 + lifeProgress * usableHeight; // 10px top margin
-				const lineWidth = minimapWidth - 10;
+				const lineWidth = minimapWidth - 10 - gap; // Adjust width to respect period lines area
 
 				// Draw the event line
 				const eventRect = document.createElementNS(
 					"http://www.w3.org/2000/svg",
 					"rect"
 				);
-				eventRect.setAttribute("x", "5");
+				eventRect.setAttribute("x", (5 + gap).toString()); // Start after the period lines area + 5px margin
 				eventRect.setAttribute("y", y.toString());
 				eventRect.setAttribute("width", lineWidth.toString());
 				eventRect.setAttribute("height", minimapLineHeight.toString());
@@ -1071,58 +1111,9 @@ class LifeGridView extends ItemView {
 							event.color !== TOOLTIP_TEXT_COLOR &&
 							event.color !== SQUARE_DEFAULT_COLOR
 						) {
-							function getLuminance(hex: string) {
-								hex = hex.replace("#", "");
-								if (hex.length === 3) {
-									hex =
-										hex[0] +
-										hex[0] +
-										hex[1] +
-										hex[1] +
-										hex[2] +
-										hex[2];
-								}
-								const r = parseInt(hex.substr(0, 2), 16) / 255;
-								const g = parseInt(hex.substr(2, 2), 16) / 255;
-								const b = parseInt(hex.substr(4, 2), 16) / 255;
-								const a = [r, g, b].map((v) =>
-									v <= 0.03928
-										? v / 12.92
-										: Math.pow((v + 0.055) / 1.055, 2.4)
-								);
-								return (
-									0.2126 * a[0] +
-									0.7152 * a[1] +
-									0.0722 * a[2]
-								);
-							}
-							function colorToHex(color: string): string {
-								// Create a temporary div to let the browser normalize the color
-								const div = document.createElement("div");
-								div.style.color = color;
-								document.body.appendChild(div);
-								const computedColor =
-									window.getComputedStyle(div).color;
-								document.body.removeChild(div);
+							// The local getLuminance and colorToHex function definitions that were here have been removed.
+							// Calls will now use the versions from the onOpen scope.
 
-								// Convert rgb/rgba to hex
-								const match = computedColor.match(
-									/rgba?\((\d+),\s*(\d+),\s*(\d+)/
-								);
-								if (match) {
-									const r = parseInt(match[1])
-										.toString(16)
-										.padStart(2, "0");
-									const g = parseInt(match[2])
-										.toString(16)
-										.padStart(2, "0");
-									const b = parseInt(match[3])
-										.toString(16)
-										.padStart(2, "0");
-									return `#${r}${g}${b}`;
-								}
-								return color; // Return original if parsing fails
-							}
 							const normalizedColor = colorToHex(event.color);
 							const isLight = getLuminance(normalizedColor) > 0.5;
 							const isVeryDark =
