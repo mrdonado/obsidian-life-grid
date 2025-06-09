@@ -109,19 +109,16 @@ class LifeGridView extends ItemView {
 		const years = YEARS;
 		const gap = 10; // Consistent gap between grid and minimap
 		const containerWidth = container.clientWidth || 800;
-		// Make minimap proportional to container width (8% with min/max limits)
-		const minimapWidthPercent = 0.08; // 8% of container width
-		const minimapWidth = Math.max(
-			50,
-			Math.min(100, containerWidth * minimapWidthPercent)
-		);
+		// Fixed day dot size - no longer responsive to screen size
+		const squareSize = 7.5; // Constant size for all day dots
+		// Make minimap width fixed to match 5 dots of the grid
+		const minimapDots = 5; // Number of dots to match for minimap width
+		const minimapWidth = minimapDots * (squareSize + gap) - gap; // Width of 5 dots: 5 * (7.5 + 10) - 10 = 77.5px
 		const minimapSpaceReserved = minimapWidth + gap;
 		// Add extra margin to ensure all dots fit comfortably
 		const gridMargin = 20; // Extra margin for safety
 		const maxGridWidth = containerWidth - minimapSpaceReserved - gridMargin;
 
-		// Fixed day dot size - no longer responsive to screen size
-		const squareSize = 7.5; // Constant size for all day dots
 		const daysPerRow = Math.floor(
 			(maxGridWidth - gap * 2) / (squareSize + gap)
 		); // Calculate days per row based on fixed size, with extra gap buffer
