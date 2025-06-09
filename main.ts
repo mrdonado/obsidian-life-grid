@@ -7,6 +7,133 @@ import {
 	LIFE_GRID_VIEW_TYPE,
 } from "./src/types/Settings";
 
+export default class LifeGridPlugin extends Plugin {
+	settings: LifeGridSettings;
+
+	async onload() {
+		await this.loadSettings();
+
+		// Add a ribbon icon to open the Life Grid
+		const lifeGridRibbonIconEl = this.addRibbonIcon(
+			"layout-grid",
+			"Open Life Grid",
+			(evt: MouseEvent) => {
+				// Check for middle-click (button === 1) to open in new tab
+				if (evt.button === 1) {
+					this.activateLifeGridViewInNewTab();
+				} else {
+					// Left-click (button === 0) opens in same tab
+					this.activateLifeGridView();
+				}
+			}
+		);
+
+		lifeGridRibbonIconEl.addClass("life-grid-ribbon-class");
+
+		// Register the Life Grid view
+		this.registerView(
+			LIFE_GRID_VIEW_TYPE,
+			(leaf) => new LifeGridView(leaf, this)
+		);
+
+		// Add a command to open the Life Grid view
+		this.addCommand({
+			id: "open-life-grid-view",
+			name: "Open Life Grid View",
+			callback: () => {
+				this.activateLifeGridView();
+			},
+		});
+
+		// This adds a settings tab so the user can configure various aspects of the plugin
+		this.addSettingTab(new LifeGridSettingTab(this.app, this));
+
+		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
+		// Using this function will automatically remove the event listener when this plugin is disabled.
+		this.registerDomEvent(document, "click", (evt: MouseEvent) => {
+			console.log("click", evt);
+		});
+
+		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
+		this.registerInterval(
+			window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
+		);
+	}
+
+	onunload() {}
+
+	async loadSettings() {
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+
+	async activateLifeGridView() {
+		const { workspace } = this.app;
+		let leaf = workspace.getLeavesOfType(LIFE_GRID_VIEW_TYPE)[0];
+		if (!leaf) {
+			// Always get a leaf in the main panel (not sidebar panels)
+			// This ensures the Life Grid opens in the main editing area
+			const activeLeaf = workspace.activeLeaf;
+
+			// Check if the active leaf is in the main panel and is replaceable
+			if (activeLeaf && activeLeaf.parent === workspace.rootSplit) {
+				const currentView = activeLeaf.view;
+				// Only replace if it's a file view or empty view, not special views
+				if (
+					currentView &&
+					(currentView.getViewType() === "empty" ||
+						"file" in currentView)
+				) {
+					leaf = activeLeaf;
+					await leaf.setViewState({
+						type: LIFE_GRID_VIEW_TYPE,
+						active: true,
+					});
+				} else {
+					// Create a new tab in the main panel
+					leaf = workspace.getLeaf("tab");
+					await leaf.setViewState({
+						type: LIFE_GRID_VIEW_TYPE,
+						active: true,
+					});
+				}
+			} else {
+				// No active leaf in main panel or active leaf is in sidebar - create new tab
+				leaf = workspace.getLeaf("tab");
+				await leaf.setViewState({
+					type: LIFE_GRID_VIEW_TYPE,
+					active: true,
+				});
+			}
+		}
+		workspace.revealLeaf(leaf);
+	}
+
+	async activateLifeGridViewInNewTab() {
+		const { workspace } = this.app;
+		const leaf = workspace.getLeaf("tab");
+		await leaf.setViewState({
+			type: LIFE_GRID_VIEW_TYPE,
+			active: true,
+		});
+		workspace.revealLeaf(leaf);
+	}
+
+	async openFileInNewTab(file: TFile) {
+		const { workspace } = this.app;
+		const leaf = workspace.getLeaf("tab");
+		await leaf.openFile(file);
+		workspace.revealLeaf(leaf);
+	}
+}
+
 class LifeGridView extends ItemView {
 	plugin: LifeGridPlugin;
 	private resizeHandler?: () => void;
@@ -1576,132 +1703,5 @@ class LifeGridView extends ItemView {
 			'div[style*="position: fixed"][style*="z-index: 9999"]'
 		);
 		tooltips.forEach((tooltip) => tooltip.remove());
-	}
-}
-
-export default class LifeGridPlugin extends Plugin {
-	settings: LifeGridSettings;
-
-	async onload() {
-		await this.loadSettings();
-
-		// Add a ribbon icon to open the Life Grid
-		const lifeGridRibbonIconEl = this.addRibbonIcon(
-			"layout-grid",
-			"Open Life Grid",
-			(evt: MouseEvent) => {
-				// Check for middle-click (button === 1) to open in new tab
-				if (evt.button === 1) {
-					this.activateLifeGridViewInNewTab();
-				} else {
-					// Left-click (button === 0) opens in same tab
-					this.activateLifeGridView();
-				}
-			}
-		);
-
-		lifeGridRibbonIconEl.addClass("life-grid-ribbon-class");
-
-		// Register the Life Grid view
-		this.registerView(
-			LIFE_GRID_VIEW_TYPE,
-			(leaf) => new LifeGridView(leaf, this)
-		);
-
-		// Add a command to open the Life Grid view
-		this.addCommand({
-			id: "open-life-grid-view",
-			name: "Open Life Grid View",
-			callback: () => {
-				this.activateLifeGridView();
-			},
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new LifeGridSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-			console.log("click", evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
-		);
-	}
-
-	onunload() {}
-
-	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData()
-		);
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-
-	async activateLifeGridView() {
-		const { workspace } = this.app;
-		let leaf = workspace.getLeavesOfType(LIFE_GRID_VIEW_TYPE)[0];
-		if (!leaf) {
-			// Always get a leaf in the main panel (not sidebar panels)
-			// This ensures the Life Grid opens in the main editing area
-			const activeLeaf = workspace.activeLeaf;
-
-			// Check if the active leaf is in the main panel and is replaceable
-			if (activeLeaf && activeLeaf.parent === workspace.rootSplit) {
-				const currentView = activeLeaf.view;
-				// Only replace if it's a file view or empty view, not special views
-				if (
-					currentView &&
-					(currentView.getViewType() === "empty" ||
-						"file" in currentView)
-				) {
-					leaf = activeLeaf;
-					await leaf.setViewState({
-						type: LIFE_GRID_VIEW_TYPE,
-						active: true,
-					});
-				} else {
-					// Create a new tab in the main panel
-					leaf = workspace.getLeaf("tab");
-					await leaf.setViewState({
-						type: LIFE_GRID_VIEW_TYPE,
-						active: true,
-					});
-				}
-			} else {
-				// No active leaf in main panel or active leaf is in sidebar - create new tab
-				leaf = workspace.getLeaf("tab");
-				await leaf.setViewState({
-					type: LIFE_GRID_VIEW_TYPE,
-					active: true,
-				});
-			}
-		}
-		workspace.revealLeaf(leaf);
-	}
-
-	async activateLifeGridViewInNewTab() {
-		const { workspace } = this.app;
-		const leaf = workspace.getLeaf("tab");
-		await leaf.setViewState({
-			type: LIFE_GRID_VIEW_TYPE,
-			active: true,
-		});
-		workspace.revealLeaf(leaf);
-	}
-
-	async openFileInNewTab(file: TFile) {
-		const { workspace } = this.app;
-		const leaf = workspace.getLeaf("tab");
-		await leaf.openFile(file);
-		workspace.revealLeaf(leaf);
 	}
 }
