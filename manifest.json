@@ -1,0 +1,10 @@
+{
+	"id": "obsidian-life-grid",
+	"name": "Life Grid",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "A view with a a grid that shows a dot for each day of your life. You can add milestones and life periods.",
+	"author": "F. Javier R. Donado",
+	"authorUrl": "https://github.com/mrdonado/obsidian-life-grid",
+	"isDesktopOnly": false
+}

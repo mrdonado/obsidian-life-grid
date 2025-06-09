@@ -1,0 +1,90 @@
+/*
+
+This CSS file will be included with your plugin, and
+available in the app when your plugin is enabled.
+
+If your plugin does not need CSS, delete this file.
+
+*/
+/*
+Life grid plugin styles
+*/
+.life-grid-container {
+  display: grid;
+  grid-template-columns: repeat(52, 12px);
+  gap: 2px;
+  max-width: 100vw;
+  overflow-x: auto;
+}
+
+.life-grid-square {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  box-sizing: border-box;
+  cursor: pointer;
+  border: 1px solid #eee;
+  transition: outline 0.1s;
+}
+
+.life-grid-square:hover {
+  outline: 2px solid #888;
+  z-index: 2;
+}
+
+.life-grid-canvas {
+  cursor: pointer;
+  background: #000;
+}
+
+/* Mobile-friendly responsive styles */
+@media (max-width: 768px) {
+  .life-grid-container {
+    grid-template-columns: repeat(26, 14px);
+    /* Fewer columns, larger squares for mobile */
+    gap: 3px;
+    padding: 10px;
+  }
+
+  .life-grid-square {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    /* Remove hover effects on mobile since they don't work well with touch */
+  }
+
+  .life-grid-canvas {
+    /* Ensure canvas is scrollable on mobile */
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .life-grid-container {
+    grid-template-columns: repeat(20, 16px);
+    /* Even fewer columns for small screens */
+    gap: 4px;
+    padding: 15px;
+  }
+
+  .life-grid-square {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+  }
+}
+
+/* Touch-friendly styles for mobile */
+@media (pointer: coarse) {
+  .life-grid-square {
+    /* Larger touch targets for mobile */
+    min-width: 16px;
+    min-height: 16px;
+  }
+
+  /* Remove hover effects on touch devices */
+  .life-grid-square:hover {
+    outline: none;
+  }
+}
