@@ -1,6 +1,10 @@
-# Life Grid Plugin for Obsidian
+# Obsidian Life Grid
 
-An Obsidian plugin to visualize your entire life as an interactive grid, where each dot represents a day of your existence. Track your journey, highlight important milestones, and gain perspective on how you're spending the time you have. Perfect for anyone who enjoys a mild existential crisis with their morning notes.
+![Life Grid Screenshot](./docs/life-grid-screenshot.png)
+
+An [Obsidian](https://obsidian.md/) plugin to visualize your entire life as an interactive grid, where each dot represents a day of your existence (whether it's real or simulated).
+
+Track your journey, highlight important milestones, and gain perspective on how you're spending the time you have. Perfect for anyone who enjoys a mild existential crisis with their morning notes.
 
 Entirely vibe-coded, so thank you, Claude!
 
@@ -76,7 +80,7 @@ Entirely vibe-coded, so thank you, Claude!
 
 ### Daily Notes Integration
 
-The plugin automatically detects daily notes in YYYY-MM-DD format. Days with notes appear in green, making it easy to see your journaling consistency.
+The plugin automatically detects daily notes (by default in `YYYY-MM-DD` format, but this is configurable). Days with notes appear in green if no other color has been defined for the current period, making it easy to see your journaling consistency.
 
 ### Adding Special Events
 
@@ -89,7 +93,7 @@ eventName: "Graduated from University"
 ---
 # 2015-06-15
 
-Today I graduated! What an amazing milestone...
+Today I graduated!
 ```
 
 ### Configuring Life Periods
@@ -165,8 +169,7 @@ eventName: "Wedding Day"
 
 ### 📝 **Daily Notes Integration**
 
--   Establish a consistent daily note naming convention (YYYY-MM-DD)
--   Use templates for daily notes to maintain consistency
+-   Establish a consistent daily note naming convention (e.g.: YYYY-MM-DD)
 -   Consider adding the Life Grid view to your daily workflow
 
 ## 🔧 Advanced Features
