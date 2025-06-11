@@ -20,13 +20,7 @@ export default class LifeGridPlugin extends Plugin {
 			"layout-grid",
 			"Open Life Grid",
 			(evt: MouseEvent) => {
-				// Check for middle-click (button === 1) to open in new tab
-				if (evt.button === 1) {
-					this.activateLifeGridViewInNewTab();
-				} else {
-					// Left-click (button === 0) opens in same tab
-					this.activateLifeGridView();
-				}
+				this.activateLifeGridViewInNewTab();
 			}
 		);
 
@@ -43,7 +37,7 @@ export default class LifeGridPlugin extends Plugin {
 			id: "open-life-grid-view",
 			name: "Open Life Grid View",
 			callback: () => {
-				this.activateLifeGridView();
+				this.activateLifeGridViewInNewTab();
 			},
 		});
 
@@ -63,48 +57,6 @@ export default class LifeGridPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-
-	async activateLifeGridView() {
-		const { workspace } = this.app;
-		let leaf = workspace.getLeavesOfType(LIFE_GRID_VIEW_TYPE)[0];
-		if (!leaf) {
-			// Always get a leaf in the main panel (not sidebar panels)
-			// This ensures the Life Grid opens in the main editing area
-			const activeLeaf = workspace.activeLeaf;
-
-			// Check if the active leaf is in the main panel and is replaceable
-			if (activeLeaf && activeLeaf.parent === workspace.rootSplit) {
-				const currentView = activeLeaf.view;
-				// Only replace if it's a file view or empty view, not special views
-				if (
-					currentView &&
-					(currentView.getViewType() === "empty" ||
-						"file" in currentView)
-				) {
-					leaf = activeLeaf;
-					await leaf.setViewState({
-						type: LIFE_GRID_VIEW_TYPE,
-						active: true,
-					});
-				} else {
-					// Create a new tab in the main panel
-					leaf = workspace.getLeaf("tab");
-					await leaf.setViewState({
-						type: LIFE_GRID_VIEW_TYPE,
-						active: true,
-					});
-				}
-			} else {
-				// No active leaf in main panel or active leaf is in sidebar - create new tab
-				leaf = workspace.getLeaf("tab");
-				await leaf.setViewState({
-					type: LIFE_GRID_VIEW_TYPE,
-					active: true,
-				});
-			}
-		}
-		workspace.revealLeaf(leaf);
 	}
 
 	async activateLifeGridViewInNewTab() {
