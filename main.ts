@@ -49,17 +49,6 @@ export default class LifeGridPlugin extends Plugin {
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new LifeGridSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, "click", (evt: MouseEvent) => {
-			console.log("click", evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log("setInterval"), 5 * 60 * 1000)
-		);
 	}
 
 	onunload() {}
@@ -552,14 +541,14 @@ class LifeGridView extends ItemView {
 		);
 		let d = new Date(startDate);
 		for (let i = 0; i <= totalDays; i++) {
-			const dayStr = this.getFormattedDateString(d); 
+			const dayStr = this.getFormattedDateString(d);
 			const isFirstDay =
 				i === 0 || (d.getMonth() === 0 && d.getDate() === 1);
 			if (isFirstDay) {
 				paintArray.push({ type: "year", year: d.getFullYear() });
 			}
 			if (!(d.getMonth() === 0 && d.getDate() === 1 && i !== 0)) {
-				const isToday = dayStr === this.getFormattedDateString(today); 
+				const isToday = dayStr === this.getFormattedDateString(today);
 				const hasNote =
 					dailyNoteSet.has(dayStr) && !!dayToFilePath[dayStr];
 				// Helper function to check if a date is within a period
@@ -570,7 +559,7 @@ class LifeGridView extends ItemView {
 					const periodEnd =
 						period.end.trim() === "" ||
 						period.end.toLowerCase() === "present"
-							? this.getFormattedDateString(today) 
+							? this.getFormattedDateString(today)
 							: period.end;
 					return date >= period.start && date <= periodEnd;
 				};
@@ -758,11 +747,11 @@ class LifeGridView extends ItemView {
 			// Add visual distinction for 5-year milestones
 			const isFiveYearMilestone = year.year % 5 === 0;
 			const headerBgColor = isFiveYearMilestone
-				? Theme.MILESTONE_HEADER_BG_COLOR 
-				: Theme.YEAR_HEADER_BG_COLOR; 
+				? Theme.MILESTONE_HEADER_BG_COLOR
+				: Theme.YEAR_HEADER_BG_COLOR;
 			const textColor = isFiveYearMilestone
-				? Theme.MILESTONE_HEADER_TEXT_COLOR 
-				: Theme.YEAR_HEADER_TEXT_COLOR; 
+				? Theme.MILESTONE_HEADER_TEXT_COLOR
+				: Theme.YEAR_HEADER_TEXT_COLOR;
 
 			// Create a larger background rectangle that can slightly invade surrounding dots' space
 			// Since this is painted before dots, dots will appear on top
@@ -926,7 +915,7 @@ class LifeGridView extends ItemView {
 			const period = periods.find((p) => {
 				const periodEnd =
 					p.end.trim() === "" || p.end.toLowerCase() === "present"
-						? this.getFormattedDateString(today) 
+						? this.getFormattedDateString(today)
 						: p.end;
 				return day.date >= p.start && day.date <= periodEnd;
 			});
@@ -1019,7 +1008,9 @@ class LifeGridView extends ItemView {
 			});
 
 			// Calculate age for this day
-			const dailyNoteFormat = this.plugin.settings.dailyNoteFormat || DEFAULT_SETTINGS.dailyNoteFormat;
+			const dailyNoteFormat =
+				this.plugin.settings.dailyNoteFormat ||
+				DEFAULT_SETTINGS.dailyNoteFormat;
 			const dayDate = moment(hoveredDay.date, dailyNoteFormat).toDate();
 			const age = calculateAge(startDate, dayDate);
 
@@ -1282,8 +1273,13 @@ class LifeGridView extends ItemView {
 						typeof fileCache.frontmatter["eventName"] === "string"
 					) {
 						// Calculate days since birth
-						const dailyNoteFormat = this.plugin.settings.dailyNoteFormat || DEFAULT_SETTINGS.dailyNoteFormat;
-						const eventDate = moment(item.date, dailyNoteFormat).toDate();
+						const dailyNoteFormat =
+							this.plugin.settings.dailyNoteFormat ||
+							DEFAULT_SETTINGS.dailyNoteFormat;
+						const eventDate = moment(
+							item.date,
+							dailyNoteFormat
+						).toDate();
 						const daysSinceBirth = Math.round(
 							(eventDate.getTime() - startDate.getTime()) /
 								(1000 * 60 * 60 * 24)
@@ -1435,8 +1431,13 @@ class LifeGridView extends ItemView {
 							isSpecialItem = true;
 
 							// Calculate age for this event
-							const dailyNoteFormat = this.plugin.settings.dailyNoteFormat || DEFAULT_SETTINGS.dailyNoteFormat;
-							const eventDate = moment(event.date, dailyNoteFormat).toDate();
+							const dailyNoteFormat =
+								this.plugin.settings.dailyNoteFormat ||
+								DEFAULT_SETTINGS.dailyNoteFormat;
+							const eventDate = moment(
+								event.date,
+								dailyNoteFormat
+							).toDate();
 							const age = calculateAge(startDate, eventDate);
 
 							tooltipText = `${age}yo ${event.date} — ${event.eventName}`;
@@ -1535,7 +1536,8 @@ class LifeGridView extends ItemView {
 							const periodStartDate = new Date(
 								periodData.period.start
 							);
-							const startDateString = this.getFormattedDateString(periodStartDate);
+							const startDateString =
+								this.getFormattedDateString(periodStartDate);
 
 							if (dayToRect[startDateString]) {
 								const { cx, cy } = dayToRect[startDateString];
