@@ -55,10 +55,9 @@ Entirely vibe-coded, so thank you, Claude!
 
 ### Installation
 
-1. Open Obsidian Settings
-2. Go to Community Plugins
-3. Search for "Life Grid"
-4. Install and enable the plugin
+1. Open Obsidian and navigate to `Settings > Community Plugins`.
+2. Search for "Life Grid" and click `Install`.
+3. Enable the plugin in the `Installed Plugins` section.
 
 ### Initial Setup
 
@@ -209,13 +208,21 @@ The plugin is optimized for performance:
 -   Batch SVG rendering for smooth scrolling
 -   Efficient event handling for large date ranges
 
+## 🚀 Installation
+
+1. Open Obsidian and navigate to `Settings > Community Plugins`.
+2. Search for "Life Grid" and click `Install`.
+3. Enable the plugin in the `Installed Plugins` section.
+
 ## 🤝 Contributing
 
-Found a bug or have a feature request? We'd love to hear from you!
+Contributions are welcome! To contribute:
 
--   **GitHub**: [mrdonado/obsidian-life-grid](https://github.com/mrdonado/obsidian-life-grid)
--   **Issues**: Report bugs or request features
--   **Pull Requests**: Contributions are welcome!
+1. Fork the repository on GitHub.
+2. Create a new branch for your feature or bug fix.
+3. Submit a pull request with a detailed description of your changes.
+
+For major changes, please open an issue first to discuss what you would like to change.
 
 ## 📄 License
 
