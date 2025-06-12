@@ -1,14 +1,84 @@
 /*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
+Life Grid Plugin Styles
+All styles have been moved from JavaScript to CSS for better theme compatibility
 */
-/*
-Life grid plugin styles
-*/
+
+/* Main Life Grid View Components */
+.life-grid-title {
+  cursor: pointer;
+}
+
+.life-grid-main-container {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 15.5em);
+  gap: 10px;
+}
+
+.life-grid-scroll-wrapper {
+  overflow: auto;
+  flex: 1;
+  max-height: 100%;
+}
+
+.life-grid-svg {
+  width: 100%;
+  display: block;
+  max-width: 100%;
+  background: var(--color-base-00, #181a1b);
+}
+
+.life-grid-minimap-container {
+  position: relative;
+  background-color: var(--color-base-00, #181a1b);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.life-grid-minimap-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: var(--color-base-00, #181a1b);
+}
+
+/* Tooltip Styles */
+.life-grid-tooltip {
+  position: fixed;
+  pointer-events: auto;
+  background: var(--color-base-20, #23272e);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  z-index: 9999;
+  color: var(--color-accent, #ffe082);
+}
+
+.life-grid-tooltip--light-bg {
+  background: var(--color-base-20, #23272e);
+  color: var(--text-normal);
+}
+
+.life-grid-tooltip--colored-bg {
+  color: var(--text-on-accent);
+}
+
+.life-grid-tooltip--very-dark {
+  background: var(--color-base-20, #23272e);
+  color: var(--text-normal);
+}
+
+/* Cursor States */
+.life-grid-cursor-pointer {
+  cursor: pointer;
+}
+
+.life-grid-cursor-default {
+  cursor: default;
+}
+
+/* Legacy styles for backward compatibility */
 .life-grid-container {
   display: grid;
   grid-template-columns: repeat(52, 12px);

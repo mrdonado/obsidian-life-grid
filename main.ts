@@ -195,7 +195,7 @@ class LifeGridView extends ItemView {
 		const container = this.containerEl.children[1];
 		container.empty();
 		const title = container.createEl("h2", { text: "Life Grid" });
-		title.style.cursor = "pointer";
+		title.addClass("life-grid-title");
 		title.addEventListener("click", () => {
 			// Repaint the grid by re-running onOpen
 			this.onOpen();
@@ -281,36 +281,26 @@ class LifeGridView extends ItemView {
 		);
 		svg.setAttribute("width", width.toString());
 		svg.setAttribute("height", height.toString());
-		svg.style.width = "100%";
+		svg.addClass("life-grid-svg");
 		svg.style.height = height + "px";
-		svg.style.display = "block";
-		svg.style.maxWidth = "100%";
 		// Use GRID_BG_COLOR from theme
-		svg.style.background = Theme.GRID_BG_COLOR;
 		svg.tabIndex = 0;
 
 		// Create main container with flex layout for grid and minimap
 		const mainContainer = container.createEl("div");
-		mainContainer.style.display = "flex";
-		mainContainer.style.width = "100%";
-		mainContainer.style.height = "calc(100vh - 15.5em)"; // Full height minus title and some padding
+		mainContainer.addClass("life-grid-main-container");
 		mainContainer.style.gap = gap + "px"; // Use consistent gap
 
 		// Wrap SVG in a scrollable container
 		const scrollWrapper = mainContainer.createEl("div");
-		scrollWrapper.style.overflow = "auto";
-		scrollWrapper.style.flex = "1";
-		scrollWrapper.style.maxHeight = "100%";
+		scrollWrapper.addClass("life-grid-scroll-wrapper");
 		scrollWrapper.appendChild(svg);
 
 		// Create minimap container
 		const minimapContainer = mainContainer.createEl("div");
+		minimapContainer.addClass("life-grid-minimap-container");
 		minimapContainer.style.width = minimapWidth + "px"; // Use calculated proportional width
 		minimapContainer.style.height = "100%";
-		minimapContainer.style.position = "relative";
-		minimapContainer.style.backgroundColor = Theme.GRID_BG_COLOR;
-		minimapContainer.style.borderRadius = Theme.MINIMAP_BORDER_RADIUS;
-		minimapContainer.style.overflow = "hidden";
 
 		// Map day string to file path for existing notes
 		const dayToFilePath: { [key: string]: string } = {};
@@ -909,7 +899,8 @@ class LifeGridView extends ItemView {
 					currentTooltip.remove();
 					currentTooltip = null;
 					lastHoveredDay = null;
-					svg.style.cursor = "default";
+					svg.removeClass("life-grid-cursor-pointer");
+					svg.addClass("life-grid-cursor-default");
 				}
 				return;
 			}
@@ -933,7 +924,8 @@ class LifeGridView extends ItemView {
 
 			// New day hovered - create new tooltip
 			lastHoveredDay = hoveredDay.date;
-			svg.style.cursor = "pointer";
+			svg.removeClass("life-grid-cursor-default");
+			svg.addClass("life-grid-cursor-pointer");
 
 			// Remove old tooltip
 			if (currentTooltip) {
@@ -942,13 +934,9 @@ class LifeGridView extends ItemView {
 
 			// Create new tooltip
 			const tooltip = document.createElement("div");
+			tooltip.addClass("life-grid-tooltip");
 			tooltip.style.position = "fixed";
 			tooltip.style.pointerEvents = "auto";
-			tooltip.style.background = Theme.TOOLTIP_BG_COLOR;
-			tooltip.style.padding = Theme.TOOLTIP_PADDING;
-			tooltip.style.borderRadius = Theme.TOOLTIP_BORDER_RADIUS;
-			tooltip.style.fontSize = Theme.TOOLTIP_FONT_SIZE;
-			tooltip.style.fontWeight = "bold";
 			tooltip.style.zIndex = "9999";
 
 			// Hide tooltip when hovering over it
@@ -956,7 +944,8 @@ class LifeGridView extends ItemView {
 				tooltip.remove();
 				currentTooltip = null;
 				lastHoveredDay = null;
-				svg.style.cursor = "default";
+				svg.removeClass("life-grid-cursor-pointer");
+				svg.addClass("life-grid-cursor-default");
 			});
 
 			// Calculate age for this day
@@ -992,12 +981,16 @@ class LifeGridView extends ItemView {
 			const isLight = luminanceValue > Theme.LIGHT_COLOR_THRESHOLD;
 			const isVeryDark = luminanceValue < Theme.VERY_DARK_COLOR_THRESHOLD;
 
+			// Remove existing tooltip color classes
+			tooltip.removeClass("life-grid-tooltip--light-bg");
+			tooltip.removeClass("life-grid-tooltip--colored-bg");
+			tooltip.removeClass("life-grid-tooltip--very-dark");
+
 			if (isVeryDark) {
-				tooltip.style.background = Theme.TOOLTIP_BG_COLOR;
-				tooltip.style.color = Theme.WHITE_COLOR;
+				tooltip.addClass("life-grid-tooltip--very-dark");
 			} else if (isLight) {
 				tooltip.style.color = normalizedColor;
-				tooltip.style.background = Theme.TOOLTIP_BG_COLOR;
+				tooltip.addClass("life-grid-tooltip--light-bg");
 			} else {
 				const whiteLuminance = getLuminance(Theme.WHITE_COLOR); // Uses onOpen-scoped getLuminance
 				const blackLuminance = getLuminance(Theme.BLACK_COLOR); // Uses onOpen-scoped getLuminance
@@ -1013,6 +1006,7 @@ class LifeGridView extends ItemView {
 					contrastWhite >= contrastBlack
 						? Theme.WHITE_COLOR
 						: Theme.BLACK_COLOR;
+				tooltip.addClass("life-grid-tooltip--colored-bg");
 			}
 
 			// Position tooltip
@@ -1035,7 +1029,8 @@ class LifeGridView extends ItemView {
 				currentTooltip.remove();
 				currentTooltip = null;
 				lastHoveredDay = null;
-				svg.style.cursor = "default";
+				svg.removeClass("life-grid-cursor-pointer");
+				svg.addClass("life-grid-cursor-default");
 			}
 		});
 
@@ -1076,10 +1071,7 @@ class LifeGridView extends ItemView {
 		const minimapHeight = minimapContainer.clientHeight || 600;
 		minimapSvg.setAttribute("width", minimapWidth.toString());
 		minimapSvg.setAttribute("height", minimapHeight.toString());
-		minimapSvg.style.width = "100%";
-		minimapSvg.style.height = "100%";
-		minimapSvg.style.display = "block";
-		minimapSvg.style.background = Theme.GRID_BG_COLOR;
+		minimapSvg.addClass("life-grid-minimap-svg");
 		minimapContainer.appendChild(minimapSvg);
 
 		// SVG minimap implementation
@@ -1300,13 +1292,9 @@ class LifeGridView extends ItemView {
 				// Always create/update tooltip showing age at current position
 				if (!tooltipDiv) {
 					tooltipDiv = document.createElement("div");
+					tooltipDiv.addClass("life-grid-tooltip");
 					tooltipDiv.style.position = "fixed";
 					tooltipDiv.style.pointerEvents = "auto";
-					tooltipDiv.style.background = Theme.TOOLTIP_BG_COLOR;
-					tooltipDiv.style.padding = Theme.TOOLTIP_PADDING;
-					tooltipDiv.style.borderRadius = Theme.TOOLTIP_BORDER_RADIUS;
-					tooltipDiv.style.fontSize = Theme.TOOLTIP_FONT_SIZE;
-					tooltipDiv.style.fontWeight = "bold";
 					tooltipDiv.style.zIndex = "9999";
 					document.body.appendChild(tooltipDiv);
 
@@ -1317,7 +1305,8 @@ class LifeGridView extends ItemView {
 						if (tooltipDiv === currentTooltipDiv) {
 							tooltipDiv = null;
 						}
-						minimapSvg.style.cursor = "default";
+						minimapSvg.removeClass("life-grid-cursor-pointer");
+						minimapSvg.addClass("life-grid-cursor-default");
 					});
 				}
 
@@ -1336,7 +1325,8 @@ class LifeGridView extends ItemView {
 				if (mx >= 0 && mx <= gap) {
 					for (const periodData of minimapPeriods) {
 						if (my >= periodData.startY && my <= periodData.endY) {
-							minimapSvg.style.cursor = "pointer";
+							minimapSvg.removeClass("life-grid-cursor-default");
+							minimapSvg.addClass("life-grid-cursor-pointer");
 							isSpecialItem = true;
 
 							// Calculate start and end ages for the period
@@ -1379,7 +1369,8 @@ class LifeGridView extends ItemView {
 				if (!isSpecialItem) {
 					for (const event of minimapEvents) {
 						if (my >= event.y && my <= event.y + event.height) {
-							minimapSvg.style.cursor = "pointer";
+							minimapSvg.removeClass("life-grid-cursor-default");
+							minimapSvg.addClass("life-grid-cursor-pointer");
 							isSpecialItem = true;
 
 							// Calculate age for this event
@@ -1401,7 +1392,8 @@ class LifeGridView extends ItemView {
 
 				// Set default cursor if not hovering over special items
 				if (!isSpecialItem) {
-					minimapSvg.style.cursor = "default";
+					minimapSvg.removeClass("life-grid-cursor-pointer");
+					minimapSvg.addClass("life-grid-cursor-default");
 				}
 
 				// Update tooltip content
