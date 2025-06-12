@@ -3,6 +3,85 @@ Life Grid Plugin Styles
 All styles have been moved from JavaScript to CSS for better theme compatibility
 */
 
+/* CSS Custom Properties for Life Grid Theme */
+:root {
+  /* Grid Colors */
+  --life-grid-bg-color: var(--color-base-00, #181a1b);
+  --life-grid-square-default-color: var(--color-base-20, #23272e);
+  --life-grid-square-border-color: var(--color-base-20, #23272e);
+  --life-grid-square-note-color: var(--color-accent, #6fcf97);
+  --life-grid-square-today-border-color: var(--color-accent-2, #ffe082);
+
+  /* Year Header Colors */
+  --life-grid-year-header-bg-color: var(--color-base-20, #23272e);
+  --life-grid-year-header-text-color: var(--text-normal, #e0e0e0);
+  --life-grid-milestone-header-bg-color: var(--color-accent-2, #ffe082);
+  --life-grid-milestone-header-text-color: var(--text-on-accent, #1a1a1a);
+
+  /* Tooltip Colors */
+  --life-grid-tooltip-bg-color: var(--color-base-20, #23272e);
+  --life-grid-tooltip-text-color: var(--color-accent-2, #ffe082);
+
+  /* Minimap Colors */
+  --life-grid-ghost-period-color: var(--color-base-30, #555);
+  --life-grid-decade-line-color: var(--color-base-25, #333);
+
+  /* Default Period Color */
+  --life-grid-default-period-color: var(--color-accent-1, #4E8C8C);
+
+  /* Contrast Colors */
+  --life-grid-white-color: var(--text-on-accent, #fff);
+  --life-grid-black-color: var(--text-on-accent-inverted, #000);
+
+  /* Dimensions */
+  --life-grid-square-border-width: 1px;
+  --life-grid-square-today-border-width: 2px;
+  --life-grid-gap: 10px;
+  --life-grid-square-size: 7.5px;
+  --life-grid-grid-margin: 20px;
+
+  /* Opacity Values */
+  --life-grid-period-opacity: 0.8;
+  --life-grid-decade-line-opacity: 0.3;
+
+  /* Tooltip Styling */
+  --life-grid-tooltip-font-size: 16px;
+  --life-grid-tooltip-padding: 6px 14px;
+  --life-grid-tooltip-border-radius: 8px;
+
+  /* Year Header Styling */
+  --life-grid-year-header-font-family: var(--font-interface, sans-serif);
+  --life-grid-year-header-font-size: 12px;
+  --life-grid-year-header-border-radius: 4px;
+  --life-grid-year-header-padding-horizontal: -1px;
+  --life-grid-year-header-padding-vertical: 3px;
+  --life-grid-year-header-height-extension: 4px;
+
+  /* Minimap Styling */
+  --life-grid-minimap-border-radius: 4px;
+  --life-grid-minimap-margin: 10px;
+  --life-grid-minimap-vertical-padding: 10px;
+  --life-grid-minimap-line-height: 3px;
+  --life-grid-decade-line-stroke-width: 1px;
+  --life-grid-event-line-margin: 5px;
+
+  /* Settings Panel Styling */
+  --life-grid-periods-container-margin-bottom: 20px;
+  --life-grid-period-div-border-radius: 8px;
+  --life-grid-period-div-padding: 16px;
+  --life-grid-period-div-margin-bottom: 12px;
+  --life-grid-period-header-margin-bottom: 12px;
+  --life-grid-delete-button-padding: 4px 8px;
+  --life-grid-delete-button-font-size: 12px;
+  --life-grid-add-button-padding: 12px;
+  --life-grid-add-button-margin-top: 8px;
+  --life-grid-advanced-section-margin-top: 20px;
+  --life-grid-toggle-button-font-size: 14px;
+  --life-grid-json-container-margin-top: 8px;
+  --life-grid-json-textarea-font-size: 12px;
+  --life-grid-period-div-border: 1px solid var(--background-modifier-border);
+}
+
 /* Main Life Grid View Components */
 .life-grid-title {
   cursor: pointer;
@@ -12,7 +91,7 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
   display: flex;
   width: 100%;
   height: calc(100vh - 15.5em);
-  gap: 10px;
+  gap: var(--life-grid-gap);
 }
 
 .life-grid-scroll-wrapper {
@@ -25,13 +104,13 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
   width: 100%;
   display: block;
   max-width: 100%;
-  background: var(--color-base-00, #181a1b);
+  background: var(--life-grid-bg-color);
 }
 
 .life-grid-minimap-container {
   position: relative;
-  background-color: var(--color-base-00, #181a1b);
-  border-radius: 4px;
+  background-color: var(--life-grid-bg-color);
+  border-radius: var(--life-grid-minimap-border-radius);
   overflow: hidden;
 }
 
@@ -39,24 +118,24 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
   width: 100%;
   height: 100%;
   display: block;
-  background: var(--color-base-00, #181a1b);
+  background: var(--life-grid-bg-color);
 }
 
 /* Tooltip Styles */
 .life-grid-tooltip {
   position: fixed;
   pointer-events: auto;
-  background: var(--color-base-20, #23272e);
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 16px;
+  background: var(--life-grid-tooltip-bg-color);
+  padding: var(--life-grid-tooltip-padding);
+  border-radius: var(--life-grid-tooltip-border-radius);
+  font-size: var(--life-grid-tooltip-font-size);
   font-weight: bold;
   z-index: 9999;
-  color: var(--color-accent, #ffe082);
+  color: var(--life-grid-tooltip-text-color);
 }
 
 .life-grid-tooltip--light-bg {
-  background: var(--color-base-20, #23272e);
+  background: var(--life-grid-tooltip-bg-color);
   color: var(--text-normal);
 }
 
@@ -65,7 +144,7 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
 }
 
 .life-grid-tooltip--very-dark {
-  background: var(--color-base-20, #23272e);
+  background: var(--life-grid-tooltip-bg-color);
   color: var(--text-normal);
 }
 
@@ -157,4 +236,46 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
   .life-grid-square:hover {
     outline: none;
   }
+}
+
+/* Settings Panel Styles */
+.life-grid-periods-container {
+  margin-bottom: var(--life-grid-periods-container-margin-bottom);
+}
+
+.life-grid-period-div {
+  border: var(--life-grid-period-div-border);
+  border-radius: var(--life-grid-period-div-border-radius);
+  padding: var(--life-grid-period-div-padding);
+  margin-bottom: var(--life-grid-period-div-margin-bottom);
+}
+
+.life-grid-period-header {
+  margin-bottom: var(--life-grid-period-header-margin-bottom);
+}
+
+.life-grid-delete-button {
+  padding: var(--life-grid-delete-button-padding);
+  font-size: var(--life-grid-delete-button-font-size);
+}
+
+.life-grid-add-button {
+  padding: var(--life-grid-add-button-padding);
+  margin-top: var(--life-grid-add-button-margin-top);
+}
+
+.life-grid-advanced-section {
+  margin-top: var(--life-grid-advanced-section-margin-top);
+}
+
+.life-grid-toggle-button {
+  font-size: var(--life-grid-toggle-button-font-size);
+}
+
+.life-grid-json-container {
+  margin-top: var(--life-grid-json-container-margin-top);
+}
+
+.life-grid-json-textarea {
+  font-size: var(--life-grid-json-textarea-font-size);
 }

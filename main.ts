@@ -1,5 +1,6 @@
 import { TFile, Plugin, ItemView, WorkspaceLeaf } from "obsidian";
 import * as Theme from "./src/theme";
+import { getLifeGridCSSProperties } from "./src/utils/cssUtils";
 import { LifeGridSettingTab } from "./src/settings/LifeGridSettingTab";
 import {
 	LifeGridSettings,
@@ -247,19 +248,25 @@ class LifeGridView extends ItemView {
 		// Prepare periods
 		const periods = this.plugin.settings.periods || [];
 
+		// Get CSS properties for styling
+		const css = getLifeGridCSSProperties();
+
 		// SVG grid parameters
 		const headerSquares = Theme.HEADER_SQUARES; // number of squares to use for year label
 		const years = YEARS;
-		const gap = Theme.GAP; // Consistent gap between grid and minimap
+		const gap = css.gap; // Consistent gap between grid and minimap
 		const containerWidth = container.clientWidth || 800;
 		// Fixed day dot size - no longer responsive to screen size
-		const squareSize = Theme.SQUARE_SIZE; // Constant size for all day dots
+		const squareSize = css.squareSize; // Constant size for all day dots
 		// Make minimap width fixed to match 5 dots of the grid
 		const minimapDots = Theme.MINIMAP_DOTS; // Number of dots to match for minimap width
-		const minimapWidth = Theme.MINIMAP_WIDTH; // Width calculation moved to theme
-		const minimapSpaceReserved = Theme.MINIMAP_SPACE_RESERVED;
+		const minimapWidth = Theme.calculateMinimapWidth(squareSize, gap); // Calculate width from CSS values
+		const minimapSpaceReserved = Theme.calculateMinimapSpaceReserved(
+			minimapWidth,
+			gap
+		);
 		// Add extra margin to ensure all dots fit comfortably
-		const gridMargin = Theme.GRID_MARGIN; // Extra margin for safety
+		const gridMargin = css.gridMargin; // Extra margin for safety
 		const maxGridWidth = containerWidth - minimapSpaceReserved - gridMargin;
 
 		const daysPerRow = Math.floor(
@@ -432,7 +439,7 @@ class LifeGridView extends ItemView {
 		// Helper to get note color based on period color
 		function getNoteColor(periodColor: string | undefined): string {
 			if (!periodColor) {
-				return Theme.SQUARE_NOTE_COLOR; // Fallback to default green
+				return css.squareNoteColor; // Fallback to default green
 			}
 
 			const luminance = getLuminance(periodColor);
@@ -441,10 +448,10 @@ class LifeGridView extends ItemView {
 			// If the period color is light, make note color darker
 			if (luminance < Theme.LIGHT_COLOR_THRESHOLD) {
 				// Dark color: lighten it by 40-60 units
-				return adjustColor(periodColor, 50);
+				return adjustColor(periodColor, Theme.COLOR_LIGHTEN_AMOUNT);
 			} else {
 				// Light color: darken it by 40-60 units
-				return adjustColor(periodColor, -50);
+				return adjustColor(periodColor, -Theme.COLOR_LIGHTEN_AMOUNT);
 			}
 		}
 
@@ -609,7 +616,7 @@ class LifeGridView extends ItemView {
 				}
 				const x = col * (squareSize + gap) + gap;
 				const y = row * (squareSize + gap) + gap;
-				let color = Theme.SQUARE_DEFAULT_COLOR;
+				let color = css.squareDefaultColor;
 				let isEvent = false;
 				if (item.periodColor) color = item.periodColor;
 				if (item.hasNote) color = getNoteColor(item.periodColor);
@@ -647,12 +654,12 @@ class LifeGridView extends ItemView {
 
 				// Group by color+stroke combination for batch rendering
 				const stroke =
-					color === Theme.SQUARE_DEFAULT_COLOR
-						? Theme.SQUARE_BORDER_COLOR
+					color === css.squareDefaultColor
+						? css.squareBorderColor
 						: "none";
 				const strokeWidth =
-					color === Theme.SQUARE_DEFAULT_COLOR
-						? Theme.SQUARE_BORDER_WIDTH
+					color === css.squareDefaultColor
+						? css.squareBorderWidth
 						: 0;
 				const colorKey = `${color}-${stroke}-${strokeWidth}`;
 
@@ -689,16 +696,16 @@ class LifeGridView extends ItemView {
 			// Add visual distinction for 5-year milestones
 			const isFiveYearMilestone = year.year % 5 === 0;
 			const headerBgColor = isFiveYearMilestone
-				? Theme.MILESTONE_HEADER_BG_COLOR
-				: Theme.YEAR_HEADER_BG_COLOR;
+				? css.milestoneHeaderBgColor
+				: css.yearHeaderBgColor;
 			const textColor = isFiveYearMilestone
-				? Theme.MILESTONE_HEADER_TEXT_COLOR
-				: Theme.YEAR_HEADER_TEXT_COLOR;
+				? css.milestoneHeaderTextColor
+				: css.yearHeaderTextColor;
 
 			// Create a larger background rectangle that can slightly invade surrounding dots' space
 			// Since this is painted before dots, dots will appear on top
-			const horizontalPadding = Theme.YEAR_HEADER_HORIZONTAL_PADDING; // Smaller horizontal extension to balance spacing
-			const heightExtension = Theme.YEAR_HEADER_HEIGHT_EXTENSION; // Extra height to make it more prominent
+			const horizontalPadding = css.yearHeaderPaddingHorizontal; // Smaller horizontal extension to balance spacing
+			const heightExtension = css.yearHeaderHeightExtension; // Extra height to make it more prominent
 			const headerRect = document.createElementNS(
 				"http://www.w3.org/2000/svg",
 				"rect"
@@ -711,7 +718,7 @@ class LifeGridView extends ItemView {
 				"y",
 				(
 					year.y -
-					Theme.YEAR_HEADER_VERTICAL_PADDING -
+					css.yearHeaderPaddingVertical -
 					heightExtension / 2
 				).toString()
 			);
@@ -723,12 +730,12 @@ class LifeGridView extends ItemView {
 				"height",
 				(
 					year.height +
-					Theme.YEAR_HEADER_VERTICAL_PADDING * 2 +
+					css.yearHeaderPaddingVertical * 2 +
 					heightExtension
 				).toString()
 			);
 			headerRect.setAttribute("fill", headerBgColor);
-			headerRect.setAttribute("rx", Theme.YEAR_HEADER_BORDER_RADIUS); // Slightly more rounded corners for larger rectangle
+			headerRect.setAttribute("rx", css.yearHeaderBorderRadius); // Slightly more rounded corners for larger rectangle
 
 			// No borders for cleaner appearance
 			yearGroup.appendChild(headerRect);
@@ -742,8 +749,8 @@ class LifeGridView extends ItemView {
 			yearText.setAttribute("text-anchor", "middle");
 			yearText.setAttribute("dominant-baseline", "middle");
 			yearText.setAttribute("fill", textColor);
-			yearText.setAttribute("font-family", Theme.YEAR_HEADER_FONT_FAMILY);
-			yearText.setAttribute("font-size", Theme.YEAR_HEADER_FONT_SIZE);
+			yearText.setAttribute("font-family", css.yearHeaderFontFamily);
+			yearText.setAttribute("font-size", css.yearHeaderFontSize);
 			yearText.setAttribute("filter", Theme.YEAR_HEADER_TEXT_SHADOW);
 			yearText.textContent = year.year.toString();
 			yearGroup.appendChild(yearText);
@@ -814,13 +821,10 @@ class LifeGridView extends ItemView {
 				);
 				borderPath.setAttribute("d", bordersPathData.join(" "));
 				borderPath.setAttribute("fill", "none");
-				borderPath.setAttribute(
-					"stroke",
-					Theme.SQUARE_TODAY_BORDER_COLOR
-				);
+				borderPath.setAttribute("stroke", css.squareTodayBorderColor);
 				borderPath.setAttribute(
 					"stroke-width",
-					Theme.SQUARE_TODAY_BORDER_WIDTH.toString()
+					css.squareTodayBorderWidth.toString()
 				);
 				fragment.appendChild(borderPath);
 			}
@@ -992,8 +996,8 @@ class LifeGridView extends ItemView {
 				tooltip.style.color = normalizedColor;
 				tooltip.addClass("life-grid-tooltip--light-bg");
 			} else {
-				const whiteLuminance = getLuminance(Theme.WHITE_COLOR); // Uses onOpen-scoped getLuminance
-				const blackLuminance = getLuminance(Theme.BLACK_COLOR); // Uses onOpen-scoped getLuminance
+				const whiteLuminance = getLuminance(css.whiteColor); // Uses onOpen-scoped getLuminance
+				const blackLuminance = getLuminance(css.blackColor); // Uses onOpen-scoped getLuminance
 
 				const contrastWhite =
 					(whiteLuminance + Theme.CONTRAST_OFFSET) /
@@ -1004,8 +1008,8 @@ class LifeGridView extends ItemView {
 				tooltip.style.background = normalizedColor;
 				tooltip.style.color =
 					contrastWhite >= contrastBlack
-						? Theme.WHITE_COLOR
-						: Theme.BLACK_COLOR;
+						? css.whiteColor
+						: css.blackColor;
 				tooltip.addClass("life-grid-tooltip--colored-bg");
 			}
 
@@ -1074,13 +1078,21 @@ class LifeGridView extends ItemView {
 		minimapSvg.addClass("life-grid-minimap-svg");
 		minimapContainer.appendChild(minimapSvg);
 
+		// CSS-based style variables for minimap
+		const minimapVerticalPadding = css.minimapVerticalPadding;
+		const ghostPeriodColor = css.ghostPeriodColor;
+		const decadeLineOpacity = css.decadeLineOpacity;
+		const periodOpacity = css.periodOpacity;
+		const decadeLineColor = css.decadeLineColor;
+		const decadeLineStrokeWidth = css.decadeLineStrokeWidth;
+		const eventLineMargin = css.eventLineMargin;
+
 		// SVG minimap implementation
 		if (true) {
 			// Always execute SVG rendering
 			// Calculate total days for configurable timeline
 			const totalLifeDays = (this.plugin.settings.maxAge || 95) * 365.25; // Include leap years
-			const usableHeight =
-				minimapHeight - Theme.MINIMAP_VERTICAL_PADDING * 2; // Leave margin top and bottom
+			const usableHeight = minimapHeight - minimapVerticalPadding * 2; // Leave margin top and bottom
 
 			// Draw life periods background first
 			// const periodLineWidth = 3; // This will now use the 'gap' variable for thickness
@@ -1104,11 +1116,14 @@ class LifeGridView extends ItemView {
 				"rect"
 			);
 			ghostPeriodRect.setAttribute("x", "0");
-			ghostPeriodRect.setAttribute("y", "10"); // Match the margin
+			ghostPeriodRect.setAttribute(
+				"y",
+				minimapVerticalPadding.toString()
+			); // Match the margin
 			ghostPeriodRect.setAttribute("width", gap.toString());
 			ghostPeriodRect.setAttribute("height", "100%");
-			ghostPeriodRect.setAttribute("fill", Theme.GHOST_PERIOD_COLOR); // Slightly lighter than background
-			ghostPeriodRect.setAttribute("opacity", Theme.DECADE_LINE_OPACITY);
+			ghostPeriodRect.setAttribute("fill", ghostPeriodColor); // Slightly lighter than background
+			ghostPeriodRect.setAttribute("opacity", decadeLineOpacity);
 			minimapSvg.appendChild(ghostPeriodRect);
 
 			for (const period of periods) {
@@ -1143,11 +1158,9 @@ class LifeGridView extends ItemView {
 				// Only draw if the period is within our timeline
 				if (startProgress <= 1 && endProgress >= 0) {
 					const startY =
-						Theme.MINIMAP_VERTICAL_PADDING +
-						startProgress * usableHeight;
+						minimapVerticalPadding + startProgress * usableHeight;
 					const endY =
-						Theme.MINIMAP_VERTICAL_PADDING +
-						endProgress * usableHeight;
+						minimapVerticalPadding + endProgress * usableHeight;
 					const height = Math.max(
 						Theme.MINIMAP_MIN_HEIGHT,
 						endY - startY
@@ -1162,7 +1175,7 @@ class LifeGridView extends ItemView {
 					periodRect.setAttribute("width", gap.toString()); // Set line width to the 'gap' value
 					periodRect.setAttribute("height", height.toString());
 					periodRect.setAttribute("fill", period.color);
-					periodRect.setAttribute("opacity", Theme.PERIOD_OPACITY); // Opacity can be adjusted
+					periodRect.setAttribute("opacity", periodOpacity); // Opacity can be adjusted
 					minimapSvg.appendChild(periodRect);
 
 					// Store for hover detection
@@ -1178,7 +1191,8 @@ class LifeGridView extends ItemView {
 			// Draw decade markers (subtle background lines) on top of periods
 			for (let decade = 0; decade <= 90; decade += 10) {
 				const decadeProgress = (decade * 365.25) / totalLifeDays;
-				const y = 10 + decadeProgress * usableHeight;
+				const y =
+					minimapVerticalPadding + decadeProgress * usableHeight;
 				const line = document.createElementNS(
 					"http://www.w3.org/2000/svg",
 					"line"
@@ -1187,12 +1201,9 @@ class LifeGridView extends ItemView {
 				line.setAttribute("y1", y.toString());
 				line.setAttribute("x2", minimapWidth.toString());
 				line.setAttribute("y2", y.toString());
-				line.setAttribute("stroke", Theme.DECADE_LINE_COLOR);
-				line.setAttribute(
-					"stroke-width",
-					Theme.DECADE_LINE_STROKE_WIDTH
-				);
-				line.setAttribute("opacity", Theme.DECADE_LINE_OPACITY);
+				line.setAttribute("stroke", decadeLineColor);
+				line.setAttribute("stroke-width", decadeLineStrokeWidth);
+				line.setAttribute("opacity", decadeLineOpacity);
 				minimapSvg.appendChild(line);
 			}
 
@@ -1253,9 +1264,7 @@ class LifeGridView extends ItemView {
 			events.forEach((event) => {
 				// Calculate proportional position within the configurable timeline
 				const lifeProgress = event.daysSinceBirth / totalLifeDays;
-				const y =
-					Theme.MINIMAP_VERTICAL_PADDING +
-					lifeProgress * usableHeight; // Top margin
+				const y = minimapVerticalPadding + lifeProgress * usableHeight; // Top margin
 				const lineWidth = minimapWidth - 10 - gap; // Adjust width to respect period lines area
 
 				// Draw the event line
@@ -1263,10 +1272,7 @@ class LifeGridView extends ItemView {
 					"http://www.w3.org/2000/svg",
 					"rect"
 				);
-				eventRect.setAttribute(
-					"x",
-					(Theme.EVENT_LINE_MARGIN + gap).toString()
-				); // Start after the period lines area + margin
+				eventRect.setAttribute("x", (eventLineMargin + gap).toString()); // Start after the period lines area + margin
 				eventRect.setAttribute("y", y.toString());
 				eventRect.setAttribute("width", lineWidth.toString());
 				eventRect.setAttribute("height", minimapLineHeight.toString());
@@ -1319,7 +1325,7 @@ class LifeGridView extends ItemView {
 
 				let tooltipText = ageString;
 				let isSpecialItem = false;
-				let specialColor = Theme.TOOLTIP_TEXT_COLOR;
+				let specialColor = css.tooltipTextColor;
 
 				// Check for period rectangles (they are on the left side, x=0 to gap)
 				if (mx >= 0 && mx <= gap) {
@@ -1402,8 +1408,8 @@ class LifeGridView extends ItemView {
 				// Apply color styling
 				if (
 					isSpecialItem &&
-					specialColor !== Theme.TOOLTIP_TEXT_COLOR &&
-					specialColor !== Theme.SQUARE_DEFAULT_COLOR
+					specialColor !== css.tooltipTextColor &&
+					specialColor !== css.squareDefaultColor
 				) {
 					const normalizedColor = colorToHex(specialColor);
 					const isLight =
@@ -1414,31 +1420,31 @@ class LifeGridView extends ItemView {
 						Theme.VERY_DARK_COLOR_THRESHOLD;
 
 					if (isVeryDark) {
-						tooltipDiv.style.background = Theme.TOOLTIP_BG_COLOR;
-						tooltipDiv.style.color = Theme.WHITE_COLOR;
+						tooltipDiv.style.background = css.tooltipBgColor;
+						tooltipDiv.style.color = css.whiteColor;
 					} else if (isLight) {
 						tooltipDiv.style.color = normalizedColor;
-						tooltipDiv.style.background = Theme.TOOLTIP_BG_COLOR;
+						tooltipDiv.style.background = css.tooltipBgColor;
 					} else {
 						const contrastWhite =
-							(getLuminance(Theme.WHITE_COLOR) +
+							(getLuminance(css.whiteColor) +
 								Theme.CONTRAST_OFFSET) /
 							(getLuminance(normalizedColor) +
 								Theme.CONTRAST_OFFSET);
 						const contrastBlack =
 							(getLuminance(normalizedColor) +
 								Theme.CONTRAST_OFFSET) /
-							(getLuminance(Theme.BLACK_COLOR) +
+							(getLuminance(css.blackColor) +
 								Theme.CONTRAST_OFFSET);
 						tooltipDiv.style.background = normalizedColor;
 						tooltipDiv.style.color =
 							contrastWhite >= contrastBlack
-								? Theme.WHITE_COLOR
-								: Theme.BLACK_COLOR;
+								? css.whiteColor
+								: css.blackColor;
 					}
 				} else {
-					tooltipDiv.style.color = Theme.TOOLTIP_TEXT_COLOR;
-					tooltipDiv.style.background = Theme.TOOLTIP_BG_COLOR;
+					tooltipDiv.style.color = css.tooltipTextColor;
+					tooltipDiv.style.background = css.tooltipBgColor;
 				}
 
 				// Position tooltip to the left of minimap
