@@ -18,15 +18,15 @@ export function getLuminance(hex: string): number {
 		hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
 	}
 	const r =
-		parseInt(hex.substr(Theme.HEX_RED_START, Theme.HEX_RED_LENGTH), 16) /
+		parseInt(hex.substring(Theme.HEX_RED_START, Theme.HEX_RED_START + Theme.HEX_RED_LENGTH), 16) /
 		Theme.RGB_NORMALIZE_FACTOR;
 	const g =
 		parseInt(
-			hex.substr(Theme.HEX_GREEN_START, Theme.HEX_GREEN_LENGTH),
+			hex.substring(Theme.HEX_GREEN_START, Theme.HEX_GREEN_START + Theme.HEX_GREEN_LENGTH),
 			16
 		) / Theme.RGB_NORMALIZE_FACTOR;
 	const b =
-		parseInt(hex.substr(Theme.HEX_BLUE_START, Theme.HEX_BLUE_LENGTH), 16) /
+		parseInt(hex.substring(Theme.HEX_BLUE_START, Theme.HEX_BLUE_START + Theme.HEX_BLUE_LENGTH), 16) /
 		Theme.RGB_NORMALIZE_FACTOR;
 	const a = [r, g, b].map((v) =>
 		v <= Theme.RGB_LINEAR_THRESHOLD
@@ -79,9 +79,9 @@ export function adjustColor(hex: string, amount: number): string {
 		hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
 	}
 
-	const r = parseInt(hex.substr(0, 2), 16);
-	const g = parseInt(hex.substr(2, 2), 16);
-	const b = parseInt(hex.substr(4, 2), 16);
+	const r = parseInt(hex.substring(0, 2), 16);
+	const g = parseInt(hex.substring(2, 4), 16);
+	const b = parseInt(hex.substring(4, 6), 16);
 
 	const newR = Math.min(255, Math.max(0, r + amount));
 	const newG = Math.min(255, Math.max(0, g + amount));
