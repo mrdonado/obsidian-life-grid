@@ -187,10 +187,10 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
 }
 
 /* Mobile-friendly responsive styles */
-@media (max-width: 768px) {
+/* Responsive design for smaller desktop screens */
+@media (max-width: 1024px) {
   .life-grid-container {
     grid-template-columns: repeat(26, 14px);
-    /* Fewer columns, larger squares for mobile */
     gap: 3px;
     padding: 10px;
   }
@@ -199,13 +199,10 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
     width: 14px;
     height: 14px;
     border-radius: 3px;
-    /* Remove hover effects on mobile since they don't work well with touch */
   }
 
   .life-grid-canvas {
-    /* Ensure canvas is scrollable on mobile */
     overflow: auto;
-    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -221,20 +218,6 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
     width: 16px;
     height: 16px;
     border-radius: 4px;
-  }
-}
-
-/* Touch-friendly styles for mobile */
-@media (pointer: coarse) {
-  .life-grid-square {
-    /* Larger touch targets for mobile */
-    min-width: 16px;
-    min-height: 16px;
-  }
-
-  /* Remove hover effects on touch devices */
-  .life-grid-square:hover {
-    outline: none;
   }
 }
 

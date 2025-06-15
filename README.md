@@ -53,6 +53,10 @@ Entirely vibe-coded, so thank you, Claude!
 
 ## 🚀 Getting Started
 
+### Requirements
+
+-   **Desktop Only**: This plugin is designed for desktop use and requires a mouse for optimal interaction with hover tooltips and precise clicking.
+
 ### Installation
 
 1. Open Obsidian and navigate to `Settings > Community Plugins`.

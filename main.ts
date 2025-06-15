@@ -1067,6 +1067,7 @@ class LifeGridView extends ItemView {
 			// Create new tooltip
 			const tooltip = document.createElement("div");
 			tooltip.addClass("life-grid-tooltip");
+			tooltip.setAttribute("data-plugin-id", "obsidian-life-grid");
 			tooltip.style.position = "fixed";
 			tooltip.style.pointerEvents = "auto";
 			tooltip.style.zIndex = "9999";
@@ -1828,9 +1829,9 @@ class LifeGridView extends ItemView {
 			(this as any).resizeTimeout = undefined;
 		}
 
-		// Clean up any remaining tooltips that might be attached to the document
+		// Clean up any remaining tooltips that belong to this plugin only
 		const tooltips = document.querySelectorAll(
-			'div[style*="position: fixed"][style*="z-index: 9999"]'
+			'div[data-plugin-id="obsidian-life-grid"]'
 		);
 		tooltips.forEach((tooltip) => tooltip.remove());
 	}
