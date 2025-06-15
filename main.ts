@@ -47,32 +47,79 @@ export default class LifeGridPlugin extends Plugin {
 	onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData()
-		);
+		try {
+			const loadedData = await this.loadData();
+			this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
+			// Validate critical settings
+			this.validateSettings();
+		} catch (error) {
+			console.error("Life Grid: Failed to load settings:", error);
+			this.settings = { ...DEFAULT_SETTINGS };
+		}
 	}
 
 	async saveSettings() {
-		await this.saveData(this.settings);
+		try {
+			await this.saveData(this.settings);
+		} catch (error) {
+			console.error("Life Grid: Failed to save settings:", error);
+		}
+	}
+
+	private validateSettings() {
+		// Validate birthday format
+		if (
+			this.settings.birthday &&
+			!/^\d{4}-\d{2}-\d{2}$/.test(this.settings.birthday)
+		) {
+			console.warn(
+				"Life Grid: Invalid birthday format, resetting to default"
+			);
+			this.settings.birthday = DEFAULT_SETTINGS.birthday;
+		}
+
+		// Validate maxAge
+		if (
+			typeof this.settings.maxAge !== "number" ||
+			this.settings.maxAge < 1 ||
+			this.settings.maxAge > 150
+		) {
+			console.warn("Life Grid: Invalid maxAge, resetting to default");
+			this.settings.maxAge = DEFAULT_SETTINGS.maxAge;
+		}
+
+		// Validate periods array
+		if (!Array.isArray(this.settings.periods)) {
+			console.warn(
+				"Life Grid: Invalid periods array, resetting to default"
+			);
+			this.settings.periods = DEFAULT_SETTINGS.periods || [];
+		}
 	}
 
 	async activateLifeGridViewInNewTab() {
-		const { workspace } = this.app;
-		const leaf = workspace.getLeaf("tab");
-		await leaf.setViewState({
-			type: LIFE_GRID_VIEW_TYPE,
-			active: true,
-		});
-		workspace.revealLeaf(leaf);
+		try {
+			const { workspace } = this.app;
+			const leaf = workspace.getLeaf("tab");
+			await leaf.setViewState({
+				type: LIFE_GRID_VIEW_TYPE,
+				active: true,
+			});
+			workspace.revealLeaf(leaf);
+		} catch (error) {
+			console.error("Life Grid: Failed to activate view:", error);
+		}
 	}
 
 	async openFileInNewTab(file: TFile) {
-		const { workspace } = this.app;
-		const leaf = workspace.getLeaf("tab");
-		await leaf.openFile(file);
-		workspace.revealLeaf(leaf);
+		try {
+			const { workspace } = this.app;
+			const leaf = workspace.getLeaf("tab");
+			await leaf.openFile(file);
+			workspace.revealLeaf(leaf);
+		} catch (error) {
+			console.error("Life Grid: Failed to open file in new tab:", error);
+		}
 	}
 }
 
@@ -80,6 +127,10 @@ class LifeGridView extends ItemView {
 	plugin: LifeGridPlugin;
 	private resizeHandler?: () => void;
 	private scrollHandler?: () => void;
+	private mouseEventHandler?: (e: MouseEvent) => void;
+	private mouseleaveHandler?: () => void;
+	private clickHandler?: (e: MouseEvent) => void;
+	private cleanupFunctions: (() => void)[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: LifeGridPlugin) {
 		super(leaf);
@@ -124,8 +175,13 @@ class LifeGridView extends ItemView {
 
 	/**
 	 * Convert a date format string (e.g., "YYYY-MM-DD") to a regex pattern
+	 * Safely escapes user input to prevent ReDoS attacks
 	 */
 	private formatToRegex(format: string): RegExp {
+		if (!format || typeof format !== "string") {
+			throw new Error("Invalid format string provided");
+		}
+
 		// Escape special regex characters except for our placeholders
 		let pattern = format.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -138,7 +194,15 @@ class LifeGridView extends ItemView {
 			.replace(/M/g, "\\d{1,2}")
 			.replace(/D/g, "\\d{1,2}");
 
-		return new RegExp(`^${pattern}$`);
+		try {
+			return new RegExp(`^${pattern}$`);
+		} catch (error) {
+			console.error(
+				"Life Grid: Invalid regex pattern generated:",
+				pattern
+			);
+			throw new Error("Failed to create date format regex");
+		}
 	}
 
 	/**
@@ -150,17 +214,24 @@ class LifeGridView extends ItemView {
 		file: TFile,
 		dailyNoteFolder: string
 	): boolean {
+		if (!file?.path) return false;
+
 		// Handle root folder cases: empty string or just "/"
 		if (!dailyNoteFolder || dailyNoteFolder === "/") {
 			// Root of vault - search recursively throughout entire vault
 			return true;
 		}
 
+		// Sanitize folder path to prevent path traversal
+		const sanitizedFolder = dailyNoteFolder
+			.replace(/\.\./g, "")
+			.replace(/\/+/g, "/");
+
 		// For specific folder, search recursively within that folder and its subfolders
 		// Ensure folder path ends with '/' for proper prefix matching
-		const folderPath = dailyNoteFolder.endsWith("/")
-			? dailyNoteFolder
-			: dailyNoteFolder + "/";
+		const folderPath = sanitizedFolder.endsWith("/")
+			? sanitizedFolder
+			: sanitizedFolder + "/";
 		return file.path.startsWith(folderPath);
 	}
 
@@ -168,29 +239,68 @@ class LifeGridView extends ItemView {
 	 * Generate the full file path for a daily note based on configured format and folder
 	 */
 	private getDailyNoteFilePath(dateString: string): string {
+		// Sanitize dateString to prevent path injection
+		const sanitizedDate = dateString.replace(/[^a-zA-Z0-9\-_]/g, "");
 		const dailyNoteFolder = this.plugin.settings.dailyNoteFolder || "";
 
 		// Handle root folder cases: empty string or just "/"
 		if (!dailyNoteFolder || dailyNoteFolder === "/") {
 			// Root of vault
-			return `${dateString}.md`;
+			return `${sanitizedDate}.md`;
 		}
 
+		// Sanitize folder path to prevent path traversal
+		const sanitizedFolder = dailyNoteFolder
+			.replace(/\.\./g, "")
+			.replace(/\/+/g, "/");
+
 		// Ensure folder path ends with '/' for proper path construction
-		const folderPath = dailyNoteFolder.endsWith("/")
-			? dailyNoteFolder
-			: dailyNoteFolder + "/";
-		return `${folderPath}${dateString}.md`;
+		const folderPath = sanitizedFolder.endsWith("/")
+			? sanitizedFolder
+			: sanitizedFolder + "/";
+		return `${folderPath}${sanitizedDate}.md`;
 	}
 
 	private getFormattedDateString(date: Date): string {
+		if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+			throw new Error("Invalid date provided to getFormattedDateString");
+		}
+
 		const format =
 			this.plugin.settings.dailyNoteFormat ||
 			DEFAULT_SETTINGS.dailyNoteFormat;
-		return moment(date).format(format);
+
+		try {
+			return moment(date).format(format);
+		} catch (error) {
+			console.error("Life Grid: Failed to format date:", error);
+			// Fallback to ISO format
+			return moment(date).format("YYYY-MM-DD");
+		}
 	}
 
 	async onOpen() {
+		try {
+			await this.renderLifeGrid();
+		} catch (error) {
+			console.error("Life Grid: Failed to render life grid:", error);
+			this.showError(
+				"Failed to render Life Grid. Please check your settings and try again."
+			);
+		}
+	}
+
+	private showError(message: string) {
+		const container = this.containerEl.children[1];
+		container.empty();
+		container.createEl("h2", { text: "Life Grid" });
+		container.createEl("div", {
+			text: message,
+			cls: "mod-warning",
+		});
+	}
+
+	private async renderLifeGrid() {
 		const container = this.containerEl.children[1];
 		container.empty();
 		const title = container.createEl("h2", { text: "Life Grid" });
@@ -204,11 +314,28 @@ class LifeGridView extends ItemView {
 		if (!birthday) {
 			container.createEl("div", {
 				text: "Please set your birthday in the plugin settings.",
+				cls: "mod-warning",
+			});
+			return;
+		}
+
+		// Validate birthday format and date
+		if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday)) {
+			container.createEl("div", {
+				text: "Invalid birthday format. Please use YYYY-MM-DD format in settings.",
+				cls: "mod-warning",
 			});
 			return;
 		}
 
 		const startDate = new Date(birthday);
+		if (isNaN(startDate.getTime())) {
+			container.createEl("div", {
+				text: "Invalid birthday date. Please check your settings.",
+				cls: "mod-warning",
+			});
+			return;
+		}
 		const endDate = new Date(startDate);
 		const YEARS = this.plugin.settings.maxAge || 95;
 		endDate.setFullYear(startDate.getFullYear() + YEARS);
@@ -875,7 +1002,7 @@ class LifeGridView extends ItemView {
 		};
 
 		// Single efficient mousemove handler for all tooltips
-		svg.addEventListener("mousemove", (e: MouseEvent) => {
+		this.mouseEventHandler = (e: MouseEvent) => {
 			const rect = svg.getBoundingClientRect();
 			const mx = e.clientX - rect.left;
 			const my = e.clientY - rect.top;
@@ -1023,10 +1150,17 @@ class LifeGridView extends ItemView {
 
 			document.body.appendChild(tooltip);
 			currentTooltip = tooltip;
+		};
+
+		svg.addEventListener("mousemove", this.mouseEventHandler);
+		this.cleanupFunctions.push(() => {
+			if (this.mouseEventHandler) {
+				svg.removeEventListener("mousemove", this.mouseEventHandler);
+			}
 		});
 
 		// Clean up tooltip when mouse leaves SVG
-		svg.addEventListener("mouseleave", () => {
+		this.mouseleaveHandler = () => {
 			if (currentTooltip) {
 				currentTooltip.remove();
 				currentTooltip = null;
@@ -1034,34 +1168,59 @@ class LifeGridView extends ItemView {
 				svg.removeClass("life-grid-cursor-pointer");
 				svg.addClass("life-grid-cursor-default");
 			}
+		};
+
+		svg.addEventListener("mouseleave", this.mouseleaveHandler);
+		this.cleanupFunctions.push(() => {
+			if (this.mouseleaveHandler) {
+				svg.removeEventListener("mouseleave", this.mouseleaveHandler);
+			}
 		});
 
-		// Add window resize handler to trigger repaint when window dimensions change
 		this.resizeHandler = () => {
 			// Debounce resize events to avoid excessive repaints
 			clearTimeout((this as any).resizeTimeout);
 			(this as any).resizeTimeout = setTimeout(() => {
-				this.onOpen();
+				try {
+					this.onOpen();
+				} catch (error) {
+					console.error(
+						"Life Grid: Error during resize repaint:",
+						error
+					);
+				}
 			}, 150);
 		};
 		window.addEventListener("resize", this.resizeHandler);
+		this.cleanupFunctions.push(() => {
+			if (this.resizeHandler) {
+				window.removeEventListener("resize", this.resizeHandler);
+			}
+			if ((this as any).resizeTimeout) {
+				clearTimeout((this as any).resizeTimeout);
+			}
+		});
 
 		// After drawing the grid, scroll to today if present
-		const todayStr = this.getFormattedDateString(today);
-		if (dayToRect[todayStr]) {
-			const { cx, cy } = dayToRect[todayStr];
-			// Find the scroll wrapper (parent of svg)
-			const scrollWrapper = svg.parentElement;
-			if (scrollWrapper) {
-				// Center today in the scroll area
-				const scrollX = cx - scrollWrapper.clientWidth / 2;
-				const scrollY = cy - scrollWrapper.clientHeight / 2;
-				scrollWrapper.scrollTo({
-					top: Math.max(0, scrollY),
-					left: Math.max(0, scrollX),
-					behavior: "auto",
-				});
+		try {
+			const todayStr = this.getFormattedDateString(today);
+			if (dayToRect[todayStr]) {
+				const { cx, cy } = dayToRect[todayStr];
+				// Find the scroll wrapper (parent of svg)
+				const scrollWrapper = svg.parentElement;
+				if (scrollWrapper) {
+					// Center today in the scroll area
+					const scrollX = cx - scrollWrapper.clientWidth / 2;
+					const scrollY = cy - scrollWrapper.clientHeight / 2;
+					scrollWrapper.scrollTo({
+						top: Math.max(0, scrollY),
+						left: Math.max(0, scrollX),
+						behavior: "auto",
+					});
+				}
 			}
+		} catch (error) {
+			console.error("Life Grid: Error scrolling to today:", error);
 		}
 
 		// === MINIMAP IMPLEMENTATION ===
@@ -1557,61 +1716,77 @@ class LifeGridView extends ItemView {
 		}
 
 		// Handle click events for regular days (non-milestone events)
-		svg.addEventListener("mousedown", async (e: MouseEvent) => {
+		this.clickHandler = async (e: MouseEvent) => {
 			// Only handle left-click (0) and middle-click (1)
 			if (e.button !== 0 && e.button !== 1) {
 				return;
 			}
 
-			const rect = svg.getBoundingClientRect();
-			const mx = e.clientX - rect.left;
-			const my = e.clientY - rect.top;
+			try {
+				const rect = svg.getBoundingClientRect();
+				const mx = e.clientX - rect.left;
+				const my = e.clientY - rect.top;
 
-			// Use spatial index for ultra-fast collision detection
-			const nearbyCells = getNearbyCells(mx, my);
-			for (const day of nearbyCells) {
-				const hitRadius = Math.max(day.radius * 1.1, day.radius + 3);
-				const dist = Math.sqrt((mx - day.cx) ** 2 + (my - day.cy) ** 2);
-				if (dist <= hitRadius) {
-					// Clean up any existing tooltips before navigation
-					if (currentTooltip) {
-						currentTooltip.remove();
-						currentTooltip = null;
-						lastHoveredDay = null;
-						svg.style.cursor = "default";
-					}
+				// Use spatial index for ultra-fast collision detection
+				const nearbyCells = getNearbyCells(mx, my);
+				for (const day of nearbyCells) {
+					const hitRadius = Math.max(
+						day.radius * 1.1,
+						day.radius + 3
+					);
+					const dist = Math.sqrt(
+						(mx - day.cx) ** 2 + (my - day.cy) ** 2
+					);
+					if (dist <= hitRadius) {
+						// Clean up any existing tooltips before navigation
+						if (currentTooltip) {
+							currentTooltip.remove();
+							currentTooltip = null;
+							lastHoveredDay = null;
+							svg.style.cursor = "default";
+						}
 
-					const filePath = dayToFilePath[day.date];
-					if (filePath) {
-						const file =
-							this.plugin.app.vault.getAbstractFileByPath(
-								filePath
+						const filePath = dayToFilePath[day.date];
+						if (filePath) {
+							const file =
+								this.plugin.app.vault.getAbstractFileByPath(
+									filePath
+								);
+							if (file instanceof TFile) {
+								if (e.button === 1) {
+									// Middle-click: open in new tab
+									await this.plugin.openFileInNewTab(file);
+								} else {
+									// Left-click: open in current Life Grid tab
+									await this.leaf.openFile(file);
+								}
+							}
+						} else {
+							// Create new file
+							const newFile = await this.plugin.app.vault.create(
+								this.getDailyNoteFilePath(day.date),
+								`# ${day.date}\n`
 							);
-						if (file instanceof TFile) {
 							if (e.button === 1) {
 								// Middle-click: open in new tab
-								await this.plugin.openFileInNewTab(file);
+								await this.plugin.openFileInNewTab(newFile);
 							} else {
-								// Left-click: open in current Life Grid tab
-								await this.leaf.openFile(file);
+								// Left-click: open in current tab
+								await this.leaf.openFile(newFile);
 							}
 						}
-					} else {
-						// Create new file
-						const newFile = await this.plugin.app.vault.create(
-							this.getDailyNoteFilePath(day.date),
-							`# ${day.date}\n`
-						);
-						if (e.button === 1) {
-							// Middle-click: open in new tab
-							await this.plugin.openFileInNewTab(newFile);
-						} else {
-							// Left-click: open in current tab
-							await this.leaf.openFile(newFile);
-						}
+						break;
 					}
-					break;
 				}
+			} catch (error) {
+				console.error("Life Grid: Error handling click event:", error);
+			}
+		};
+
+		svg.addEventListener("mousedown", this.clickHandler);
+		this.cleanupFunctions.push(() => {
+			if (this.clickHandler) {
+				svg.removeEventListener("mousedown", this.clickHandler);
 			}
 		});
 	}
