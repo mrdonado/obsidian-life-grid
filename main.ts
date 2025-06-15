@@ -1,6 +1,9 @@
 import { TFile, Plugin, ItemView, WorkspaceLeaf, moment } from "obsidian";
 import * as Theme from "./src/theme";
 import { getLifeGridCSSProperties } from "./src/utils/cssUtils";
+import { calculateAge } from "./src/utils/ageUtils";
+import { getLuminance, colorToHex, adjustColor, getNoteColor } from "./src/utils/colorUtils";
+import { SpatialIndex, ClickableDay } from "./src/utils/spatialUtils";
 import { LifeGridSettingTab } from "./src/settings/LifeGridSettingTab";
 import {
 	LifeGridSettings,
@@ -103,7 +106,8 @@ export default class LifeGridPlugin extends Plugin {
 	async activateLifeGridViewInNewTab() {
 		try {
 			const { workspace } = this.app;
-			const leaf = workspace.getLeaf("tab");
+			// Use more compatible API for older Obsidian versions
+			const leaf = workspace.getLeaf(false);
 			await leaf.setViewState({
 				type: LIFE_GRID_VIEW_TYPE,
 				active: true,
@@ -117,7 +121,8 @@ export default class LifeGridPlugin extends Plugin {
 	async openFileInNewTab(file: TFile) {
 		try {
 			const { workspace } = this.app;
-			const leaf = workspace.getLeaf("tab");
+			// Use more compatible API for older Obsidian versions
+			const leaf = workspace.getLeaf(false);
 			await leaf.openFile(file);
 			workspace.revealLeaf(leaf);
 		} catch (error) {
@@ -465,124 +470,6 @@ class LifeGridView extends ItemView {
 
 		// All drawing is done with SVG elements
 
-		// Helper to calculate age in years with 1 decimal (floored to not show older before birthday)
-		function calculateAge(birthDate: Date, targetDate: Date): string {
-			const ageInMilliseconds =
-				targetDate.getTime() - birthDate.getTime();
-			const ageInYears =
-				ageInMilliseconds /
-				(Theme.MS_PER_SECOND *
-					Theme.SECONDS_PER_MINUTE *
-					Theme.MINUTES_PER_HOUR *
-					Theme.HOURS_PER_DAY *
-					Theme.DAYS_PER_YEAR);
-			// Floor to whole years, then add decimal part
-			const wholeYears = Math.floor(ageInYears);
-			const decimalPart = ageInYears - wholeYears;
-			return (
-				wholeYears +
-				Math.floor(decimalPart * Theme.AGE_PRECISION_MULTIPLIER) /
-					Theme.AGE_PRECISION_MULTIPLIER
-			).toFixed(1);
-		}
-
-		// Helper to get luminance of a color
-		function getLuminance(hex: string): number {
-			hex = hex.replace("#", "");
-			if (hex.length === 3) {
-				hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-			}
-			const r =
-				parseInt(
-					hex.substr(Theme.HEX_RED_START, Theme.HEX_RED_LENGTH),
-					16
-				) / Theme.RGB_NORMALIZE_FACTOR;
-			const g =
-				parseInt(
-					hex.substr(Theme.HEX_GREEN_START, Theme.HEX_GREEN_LENGTH),
-					16
-				) / Theme.RGB_NORMALIZE_FACTOR;
-			const b =
-				parseInt(
-					hex.substr(Theme.HEX_BLUE_START, Theme.HEX_BLUE_LENGTH),
-					16
-				) / Theme.RGB_NORMALIZE_FACTOR;
-			const a = [r, g, b].map((v) =>
-				v <= Theme.RGB_LINEAR_THRESHOLD
-					? v / Theme.RGB_LINEAR_DIVISOR
-					: Math.pow(
-							(v + Theme.RGB_GAMMA_OFFSET) /
-								Theme.RGB_GAMMA_DIVISOR,
-							Theme.RGB_GAMMA_EXPONENT
-					  )
-			);
-			return (
-				Theme.LUMINANCE_RED_COEFFICIENT * a[0] +
-				Theme.LUMINANCE_GREEN_COEFFICIENT * a[1] +
-				Theme.LUMINANCE_BLUE_COEFFICIENT * a[2]
-			);
-		}
-
-		// Helper to convert color names/rgb to hex (this might have been added previously with a faulty regex)
-		function colorToHex(color: string): string {
-			const div = document.createElement("div");
-			div.style.color = color;
-			document.body.appendChild(div);
-			const computedColor = window.getComputedStyle(div).color;
-			document.body.removeChild(div);
-
-			const match = computedColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-			if (match) {
-				const r = parseInt(match[1]).toString(16).padStart(2, "0");
-				const g = parseInt(match[2]).toString(16).padStart(2, "0");
-				const b = parseInt(match[3]).toString(16).padStart(2, "0");
-				return `#${r}${g}${b}`;
-			}
-			return color; // Fallback if regex doesn't match or color is already hex
-		}
-
-		// Helper to adjust color brightness
-		function adjustColor(hex: string, amount: number): string {
-			hex = hex.replace("#", "");
-			if (hex.length === 3) {
-				hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-			}
-
-			const r = parseInt(hex.substr(0, 2), 16);
-			const g = parseInt(hex.substr(2, 2), 16);
-			const b = parseInt(hex.substr(4, 2), 16);
-
-			const newR = Math.min(255, Math.max(0, r + amount));
-			const newG = Math.min(255, Math.max(0, g + amount));
-			const newB = Math.min(255, Math.max(0, b + amount));
-
-			return (
-				"#" +
-				newR.toString(16).padStart(2, "0") +
-				newG.toString(16).padStart(2, "0") +
-				newB.toString(16).padStart(2, "0")
-			);
-		}
-
-		// Helper to get note color based on period color
-		function getNoteColor(periodColor: string | undefined): string {
-			if (!periodColor) {
-				return css.squareNoteColor; // Fallback to default green
-			}
-
-			const luminance = getLuminance(periodColor);
-
-			// If the period color is dark, make note color lighter
-			// If the period color is light, make note color darker
-			if (luminance < Theme.LIGHT_COLOR_THRESHOLD) {
-				// Dark color: lighten it by 40-60 units
-				return adjustColor(periodColor, Theme.COLOR_LIGHTEN_AMOUNT);
-			} else {
-				// Light color: darken it by 40-60 units
-				return adjustColor(periodColor, -Theme.COLOR_LIGHTEN_AMOUNT);
-			}
-		}
-
 		// Tooltip element must be accessible across event handlers
 		let tooltipDiv: HTMLDivElement | null = null;
 		// Update dayToRect type
@@ -604,13 +491,6 @@ class LifeGridView extends ItemView {
 		const paintArray: Array<YearPaint | DayPaint> = [];
 
 		// Precompute clickable points for performance
-		interface ClickableDay {
-			date: string;
-			cx: number;
-			cy: number;
-			radius: number;
-			color: string;
-		}
 		const clickableDays: ClickableDay[] = [];
 
 		const totalDays = Math.round(
@@ -657,34 +537,8 @@ class LifeGridView extends ItemView {
 		// 2. High-performance SVG rendering using single path elements
 
 		// Create spatial index for ultra-fast hit detection
-		const GRID_CELL_SIZE = 50; // pixels
-		const spatialIndex = new Map<string, ClickableDay[]>();
-
-		function addToSpatialIndex(day: ClickableDay) {
-			const gridX = Math.floor(day.cx / GRID_CELL_SIZE);
-			const gridY = Math.floor(day.cy / GRID_CELL_SIZE);
-			const key = `${gridX},${gridY}`;
-			if (!spatialIndex.has(key)) {
-				spatialIndex.set(key, []);
-			}
-			spatialIndex.get(key)!.push(day);
-		}
-
-		function getNearbyCells(x: number, y: number): ClickableDay[] {
-			const gridX = Math.floor(x / GRID_CELL_SIZE);
-			const gridY = Math.floor(y / GRID_CELL_SIZE);
-			const nearby: ClickableDay[] = [];
-
-			// Check 3x3 grid around the point
-			for (let dx = -1; dx <= 1; dx++) {
-				for (let dy = -1; dy <= 1; dy++) {
-					const key = `${gridX + dx},${gridY + dy}`;
-					const cell = spatialIndex.get(key);
-					if (cell) nearby.push(...cell);
-				}
-			}
-			return nearby;
-		}
+		// Create spatial index for efficient proximity queries
+		const spatialIndex = new SpatialIndex();
 
 		// Use DocumentFragment for batch DOM updates
 		const fragment = document.createDocumentFragment();
@@ -747,7 +601,7 @@ class LifeGridView extends ItemView {
 				let color = css.squareDefaultColor;
 				let isEvent = false;
 				if (item.periodColor) color = item.periodColor;
-				if (item.hasNote) color = getNoteColor(item.periodColor);
+				if (item.hasNote) color = getNoteColor(item.periodColor, css.squareNoteColor);
 				// Use custom color property if present (overrides periodColor and note color)
 				if ((item as any).color) {
 					color = (item as any).color;
@@ -808,7 +662,7 @@ class LifeGridView extends ItemView {
 				// Add to clickable days and spatial index
 				const clickableDay = { date: item.date, cx, cy, radius, color };
 				clickableDays.push(clickableDay);
-				addToSpatialIndex(clickableDay);
+				spatialIndex.add(clickableDay);
 				dayToRect[item.date] = { cx, cy, radius };
 				col++;
 			}
@@ -1011,7 +865,7 @@ class LifeGridView extends ItemView {
 			const my = e.clientY - rect.top;
 
 			// Use spatial index for ultra-fast collision detection
-			const nearbyCells = getNearbyCells(mx, my);
+			const nearbyCells = spatialIndex.getNearbyCells(mx, my);
 			let hoveredDay: ClickableDay | null = null;
 
 			// Find the day under cursor
@@ -1732,7 +1586,7 @@ class LifeGridView extends ItemView {
 				const my = e.clientY - rect.top;
 
 				// Use spatial index for ultra-fast collision detection
-				const nearbyCells = getNearbyCells(mx, my);
+				const nearbyCells = spatialIndex.getNearbyCells(mx, my);
 				for (const day of nearbyCells) {
 					const hitRadius = Math.max(
 						day.radius * 1.1,
