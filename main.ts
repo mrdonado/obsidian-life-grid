@@ -4,6 +4,12 @@ import { getLifeGridCSSProperties } from "./src/utils/cssUtils";
 import { calculateAge } from "./src/utils/ageUtils";
 import { getLuminance, colorToHex, getNoteColor } from "./src/utils/colorUtils";
 import { SpatialIndex, ClickableDay } from "./src/utils/spatialUtils";
+import {
+	formatToRegex,
+	isInDailyNotesFolder,
+	getDailyNoteFilePath,
+	getFormattedDateString,
+} from "./src/utils/dailyNotesUtils";
 import { LifeGridSettingTab } from "./src/settings/LifeGridSettingTab";
 import {
 	LifeGridSettings,
@@ -181,112 +187,6 @@ class LifeGridView extends ItemView {
 		};
 	}
 
-	/**
-	 * Convert a date format string (e.g., "YYYY-MM-DD") to a regex pattern
-	 * Safely escapes user input to prevent ReDoS attacks
-	 */
-	private formatToRegex(format: string): RegExp {
-		if (!format || typeof format !== "string") {
-			throw new Error("Invalid format string provided");
-		}
-
-		// Escape special regex characters except for our placeholders
-		let pattern = format.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-		// Replace date format tokens with regex patterns
-		pattern = pattern
-			.replace(/YYYY/g, "\\d{4}")
-			.replace(/YY/g, "\\d{2}")
-			.replace(/MM/g, "\\d{2}")
-			.replace(/DD/g, "\\d{2}")
-			.replace(/M/g, "\\d{1,2}")
-			.replace(/D/g, "\\d{1,2}");
-
-		try {
-			return new RegExp(`^${pattern}$`);
-		} catch (error) {
-			console.error(
-				"Life Grid: Invalid regex pattern generated:",
-				pattern
-			);
-			throw new Error("Failed to create date format regex");
-		}
-	}
-
-	/**
-	 * Check if a file is in the configured daily notes folder
-	 * Uses recursive search: empty folder setting searches entire vault,
-	 * specific folder setting searches within that folder and all subfolders
-	 */
-	private isInDailyNotesFolder(
-		file: TFile,
-		dailyNoteFolder: string
-	): boolean {
-		if (!file?.path) return false;
-
-		// Handle root folder cases: empty string or just "/"
-		if (!dailyNoteFolder || dailyNoteFolder === "/") {
-			// Root of vault - search recursively throughout entire vault
-			return true;
-		}
-
-		// Sanitize folder path to prevent path traversal
-		const sanitizedFolder = dailyNoteFolder
-			.replace(/\.\./g, "")
-			.replace(/\/+/g, "/");
-
-		// For specific folder, search recursively within that folder and its subfolders
-		// Ensure folder path ends with '/' for proper prefix matching
-		const folderPath = sanitizedFolder.endsWith("/")
-			? sanitizedFolder
-			: sanitizedFolder + "/";
-		return file.path.startsWith(folderPath);
-	}
-
-	/**
-	 * Generate the full file path for a daily note based on configured format and folder
-	 */
-	private getDailyNoteFilePath(dateString: string): string {
-		// Sanitize dateString to prevent path injection
-		const sanitizedDate = dateString.replace(/[^a-zA-Z0-9\-_]/g, "");
-		const dailyNoteFolder = this.plugin.settings.dailyNoteFolder || "";
-
-		// Handle root folder cases: empty string or just "/"
-		if (!dailyNoteFolder || dailyNoteFolder === "/") {
-			// Root of vault
-			return `${sanitizedDate}.md`;
-		}
-
-		// Sanitize folder path to prevent path traversal
-		const sanitizedFolder = dailyNoteFolder
-			.replace(/\.\./g, "")
-			.replace(/\/+/g, "/");
-
-		// Ensure folder path ends with '/' for proper path construction
-		const folderPath = sanitizedFolder.endsWith("/")
-			? sanitizedFolder
-			: sanitizedFolder + "/";
-		return `${folderPath}${sanitizedDate}.md`;
-	}
-
-	private getFormattedDateString(date: Date): string {
-		if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
-			throw new Error("Invalid date provided to getFormattedDateString");
-		}
-
-		const format =
-			this.plugin.settings.dailyNoteFormat ||
-			DEFAULT_SETTINGS.dailyNoteFormat;
-
-		try {
-			return moment(date).format(format);
-		} catch (error) {
-			console.error("Life Grid: Failed to format date:", error);
-			// Fallback to ISO format
-			return moment(date).format("YYYY-MM-DD");
-		}
-	}
-
 	async onOpen() {
 		try {
 			await this.renderLifeGrid();
@@ -356,7 +256,7 @@ class LifeGridView extends ItemView {
 		const dailyNoteFormat =
 			this.plugin.settings.dailyNoteFormat || "YYYY-MM-DD";
 		const dailyNoteFolder = this.plugin.settings.dailyNoteFolder || "";
-		const formatRegex = this.formatToRegex(dailyNoteFormat);
+		const formatRegex = formatToRegex(dailyNoteFormat);
 
 		let filesChecked = 0;
 		let filesInFolder = 0;
@@ -366,7 +266,7 @@ class LifeGridView extends ItemView {
 			filesChecked++;
 
 			// Check if file is in the correct folder
-			const isInFolder = this.isInDailyNotesFolder(file, dailyNoteFolder);
+			const isInFolder = isInDailyNotesFolder(file, dailyNoteFolder);
 			if (isInFolder) {
 				filesInFolder++;
 				// Check if filename matches the date format
@@ -448,7 +348,7 @@ class LifeGridView extends ItemView {
 		const dayToColor: { [key: string]: string } = {};
 		for (const file of files) {
 			// Check if file is in the correct folder and matches the format
-			if (this.isInDailyNotesFolder(file, dailyNoteFolder)) {
+			if (isInDailyNotesFolder(file, dailyNoteFolder)) {
 				const match = file.basename.match(formatRegex);
 				if (match) {
 					dayToFilePath[file.basename] = file.path;
@@ -498,14 +398,22 @@ class LifeGridView extends ItemView {
 		);
 		let d = new Date(startDate);
 		for (let i = 0; i <= totalDays; i++) {
-			const dayStr = this.getFormattedDateString(d);
+			const dayStr = getFormattedDateString(
+				d,
+				this.plugin.settings.dailyNoteFormat
+			);
 			const isFirstDay =
 				i === 0 || (d.getMonth() === 0 && d.getDate() === 1);
 			if (isFirstDay) {
 				paintArray.push({ type: "year", year: d.getFullYear() });
 			}
 			if (!(d.getMonth() === 0 && d.getDate() === 1 && i !== 0)) {
-				const isToday = dayStr === this.getFormattedDateString(today);
+				const isToday =
+					dayStr ===
+					getFormattedDateString(
+						today,
+						this.plugin.settings.dailyNoteFormat
+					);
 				const hasNote =
 					dailyNoteSet.has(dayStr) && !!dayToFilePath[dayStr];
 				// Helper function to check if a date is within a period
@@ -516,7 +424,10 @@ class LifeGridView extends ItemView {
 					const periodEnd =
 						period.end.trim() === "" ||
 						period.end.toLowerCase() === "present"
-							? this.getFormattedDateString(today)
+							? getFormattedDateString(
+									today,
+									this.plugin.settings.dailyNoteFormat
+							  )
 							: period.end;
 					return date >= period.start && date <= periodEnd;
 				};
@@ -844,7 +755,10 @@ class LifeGridView extends ItemView {
 			const period = periods.find((p) => {
 				const periodEnd =
 					p.end.trim() === "" || p.end.toLowerCase() === "present"
-						? this.getFormattedDateString(today)
+						? getFormattedDateString(
+								today,
+								this.plugin.settings.dailyNoteFormat
+						  )
 						: p.end;
 				return day.date >= p.start && day.date <= periodEnd;
 			});
@@ -1062,7 +976,10 @@ class LifeGridView extends ItemView {
 
 		// After drawing the grid, scroll to today if present
 		try {
-			const todayStr = this.getFormattedDateString(today);
+			const todayStr = getFormattedDateString(
+				today,
+				this.plugin.settings.dailyNoteFormat
+			);
 			if (dayToRect[todayStr]) {
 				const { cx, cy } = dayToRect[todayStr];
 				// Find the scroll wrapper (parent of svg)
@@ -1492,8 +1409,10 @@ class LifeGridView extends ItemView {
 							const periodStartDate = new Date(
 								periodData.period.start
 							);
-							const startDateString =
-								this.getFormattedDateString(periodStartDate);
+							const startDateString = getFormattedDateString(
+								periodStartDate,
+								this.plugin.settings.dailyNoteFormat
+							);
 
 							if (dayToRect[startDateString]) {
 								const { cx, cy } = dayToRect[startDateString];
@@ -1542,7 +1461,11 @@ class LifeGridView extends ItemView {
 								// Create new file and open in current tab
 								const newFile =
 									await this.plugin.app.vault.create(
-										this.getDailyNoteFilePath(event.date),
+										getDailyNoteFilePath(
+											event.date,
+											this.plugin.settings
+												.dailyNoteFolder || ""
+										),
 										`# ${event.date}\n`
 									);
 								await this.leaf.openFile(newFile);
@@ -1623,7 +1546,10 @@ class LifeGridView extends ItemView {
 						} else {
 							// Create new file
 							const newFile = await this.plugin.app.vault.create(
-								this.getDailyNoteFilePath(day.date),
+								getDailyNoteFilePath(
+									day.date,
+									this.plugin.settings.dailyNoteFolder || ""
+								),
 								`# ${day.date}\n`
 							);
 							if (e.button === 1) {
