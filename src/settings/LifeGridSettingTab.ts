@@ -35,7 +35,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 				text.setPlaceholder("YYYY-MM-DD")
 					.setValue(this.plugin.settings.birthday || "")
 					.onChange(async (value) => {
-						if (!/\d{4}-\d{2}-\d{2}/.test(value)) {
+						if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
 							console.error(
 								"Invalid date format. Please use YYYY-MM-DD."
 							);

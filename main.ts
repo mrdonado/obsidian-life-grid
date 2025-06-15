@@ -44,7 +44,10 @@ export default class LifeGridPlugin extends Plugin {
 		this.addSettingTab(new LifeGridSettingTab(this.app, this));
 	}
 
-	onunload() {}
+	onunload() {
+		// Plugin cleanup - most cleanup is handled by individual views
+		// in their onClose() methods, but we can add any plugin-wide cleanup here
+	}
 
 	async loadSettings() {
 		try {
@@ -1792,6 +1795,16 @@ class LifeGridView extends ItemView {
 	}
 
 	async onClose() {
+		// Execute all collected cleanup functions
+		this.cleanupFunctions.forEach((cleanup) => {
+			try {
+				cleanup();
+			} catch (error) {
+				console.error("Life Grid: Error during cleanup:", error);
+			}
+		});
+		this.cleanupFunctions = [];
+
 		// Clean up resize handler when view is closed
 		if (this.resizeHandler) {
 			window.removeEventListener("resize", this.resizeHandler);
