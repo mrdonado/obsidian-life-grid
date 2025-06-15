@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-life-grid",
+	"name": "life-grid",
 	"version": "1.0.0",
 	"description": "Visualize your entire life as an interactive grid, where each dot represents a day. Highlight notes, life periods, and milestones to reflect on your past, track your present, and plan your future.",
 	"main": "main.js",
