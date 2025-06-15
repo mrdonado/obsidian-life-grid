@@ -8,7 +8,6 @@ import {
 	getFormattedDateString,
 	getDailyNoteFilePath,
 } from "./dailyNotesUtils";
-import { DEFAULT_SETTINGS } from "../types/Settings";
 
 /**
  * Configuration for rendering the Life Grid SVG
@@ -67,19 +66,7 @@ export interface DayPaint {
 export function createLifeGridSVG(
 	config: LifeGridRenderConfig
 ): LifeGridRenderResult {
-	const {
-		startDate,
-		endDate,
-		today,
-		years,
-		dailyNoteSet,
-		dayToFilePath,
-		dayToColor,
-		periods,
-		containerWidth,
-		dailyNoteFormat,
-		metadataCache,
-	} = config;
+	const { years, containerWidth } = config;
 
 	// Get CSS properties for styling
 	const css = getLifeGridCSSProperties();
@@ -741,8 +728,7 @@ export function setupUIInteractions(
 	config: UIInteractionConfig,
 	renderResult: LifeGridRenderResult,
 	minimapSvg: SVGElement,
-	scrollWrapper: HTMLElement,
-	minimapContainer: HTMLElement
+	scrollWrapper: HTMLElement
 ) {
 	const {
 		app,
@@ -754,17 +740,14 @@ export function setupUIInteractions(
 		periods,
 		dailyNoteSet,
 		dayToFilePath,
-		dayToColor,
 		dailyNoteFormat,
 		metadataCache,
 	} = config;
 
-	const { svg, clickableDays, spatialIndex, dayToRect, paintArray } =
-		renderResult;
+	const { svg, spatialIndex, dayToRect, paintArray } = renderResult;
 	const css = getLifeGridCSSProperties();
 
 	// Tooltip management
-	let tooltipDiv: HTMLDivElement | null = null;
 	let currentTooltip: HTMLDivElement | null = null;
 	let lastHoveredDay: string | null = null;
 
@@ -1058,7 +1041,6 @@ function setupMinimapInteractions(
 
 	const css = getLifeGridCSSProperties();
 	const gap = css.gap;
-	const minimapWidth = Theme.calculateMinimapWidth(css.squareSize, gap);
 	const minimapHeight = parseInt(minimapSvg.getAttribute("height") || "600");
 	const minimapVerticalPadding = css.minimapVerticalPadding;
 	const totalLifeDays = years * 365.25;

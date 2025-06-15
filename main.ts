@@ -1,13 +1,7 @@
-import { TFile, Plugin, ItemView, WorkspaceLeaf, moment } from "obsidian";
-import * as Theme from "./src/theme";
-import { getLifeGridCSSProperties } from "./src/utils/cssUtils";
-import { calculateAge } from "./src/utils/ageUtils";
-import { getLuminance, colorToHex, getNoteColor } from "./src/utils/colorUtils";
-import { SpatialIndex, ClickableDay } from "./src/utils/spatialUtils";
+import { TFile, Plugin, ItemView, WorkspaceLeaf } from "obsidian";
 import {
 	formatToRegex,
 	isInDailyNotesFolder,
-	getDailyNoteFilePath,
 	getFormattedDateString,
 } from "./src/utils/dailyNotesUtils";
 import {
@@ -340,13 +334,7 @@ class LifeGridView extends ItemView {
 			cleanupFunctions: this.cleanupFunctions,
 		};
 
-		setupUIInteractions(
-			uiConfig,
-			renderResult,
-			minimapSvg,
-			scrollWrapper,
-			minimapContainer
-		);
+		setupUIInteractions(uiConfig, renderResult, minimapSvg, scrollWrapper);
 
 		// Setup window resize handler
 		this.resizeHandler = () => {
