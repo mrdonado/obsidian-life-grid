@@ -2,7 +2,7 @@ import { TFile, Plugin, ItemView, WorkspaceLeaf, moment } from "obsidian";
 import * as Theme from "./src/theme";
 import { getLifeGridCSSProperties } from "./src/utils/cssUtils";
 import { calculateAge } from "./src/utils/ageUtils";
-import { getLuminance, colorToHex, adjustColor, getNoteColor } from "./src/utils/colorUtils";
+import { getLuminance, colorToHex, getNoteColor } from "./src/utils/colorUtils";
 import { SpatialIndex, ClickableDay } from "./src/utils/spatialUtils";
 import { LifeGridSettingTab } from "./src/settings/LifeGridSettingTab";
 import {
@@ -601,7 +601,8 @@ class LifeGridView extends ItemView {
 				let color = css.squareDefaultColor;
 				let isEvent = false;
 				if (item.periodColor) color = item.periodColor;
-				if (item.hasNote) color = getNoteColor(item.periodColor, css.squareNoteColor);
+				if (item.hasNote)
+					color = getNoteColor(item.periodColor, css.squareNoteColor);
 				// Use custom color property if present (overrides periodColor and note color)
 				if ((item as any).color) {
 					color = (item as any).color;

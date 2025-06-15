@@ -1,6 +1,6 @@
 /**
  * Spatial indexing utilities for the Life Grid plugin.
- * 
+ *
  * Provides efficient spatial lookup for interactive elements using a grid-based index.
  */
 
@@ -31,14 +31,14 @@ export class SpatialIndex {
 
 	/**
 	 * Add a clickable day to the spatial index.
-	 * 
+	 *
 	 * @param day The clickable day to add
 	 */
 	add(day: ClickableDay): void {
 		const gridX = Math.floor(day.cx / this.cellSize);
 		const gridY = Math.floor(day.cy / this.cellSize);
 		const key = `${gridX},${gridY}`;
-		
+
 		if (!this.index.has(key)) {
 			this.index.set(key, []);
 		}
@@ -48,7 +48,7 @@ export class SpatialIndex {
 	/**
 	 * Get all clickable days near the specified coordinates.
 	 * Searches in a 3x3 grid around the point for efficiency.
-	 * 
+	 *
 	 * @param x X coordinate
 	 * @param y Y coordinate
 	 * @returns Array of nearby clickable days
