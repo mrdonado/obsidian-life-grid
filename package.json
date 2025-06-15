@@ -10,7 +10,7 @@
 		"build:watch": "node esbuild.config.mjs watch"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "F. Javier R. Donado",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",

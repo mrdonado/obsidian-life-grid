@@ -1,4 +1,4 @@
-import { TFile, Plugin, ItemView, WorkspaceLeaf } from "obsidian";
+import { TFile, Plugin, ItemView, WorkspaceLeaf, moment } from "obsidian";
 import * as Theme from "./src/theme";
 import { getLifeGridCSSProperties } from "./src/utils/cssUtils";
 import { LifeGridSettingTab } from "./src/settings/LifeGridSettingTab";
@@ -7,8 +7,6 @@ import {
 	DEFAULT_SETTINGS,
 	LIFE_GRID_VIEW_TYPE,
 } from "./src/types/Settings";
-
-declare const moment: any;
 
 export default class LifeGridPlugin extends Plugin {
 	settings: LifeGridSettings;
@@ -1176,6 +1174,7 @@ class LifeGridView extends ItemView {
 					periodRect.setAttribute("height", height.toString());
 					periodRect.setAttribute("fill", period.color);
 					periodRect.setAttribute("opacity", periodOpacity); // Opacity can be adjusted
+					periodRect.classList.add("life-grid-cursor-pointer");
 					minimapSvg.appendChild(periodRect);
 
 					// Store for hover detection
@@ -1277,6 +1276,7 @@ class LifeGridView extends ItemView {
 				eventRect.setAttribute("width", lineWidth.toString());
 				eventRect.setAttribute("height", minimapLineHeight.toString());
 				eventRect.setAttribute("fill", event.color);
+				eventRect.classList.add("life-grid-cursor-pointer");
 				minimapSvg.appendChild(eventRect);
 
 				// Store for hover detection
@@ -1311,8 +1311,6 @@ class LifeGridView extends ItemView {
 						if (tooltipDiv === currentTooltipDiv) {
 							tooltipDiv = null;
 						}
-						minimapSvg.removeClass("life-grid-cursor-pointer");
-						minimapSvg.addClass("life-grid-cursor-default");
 					});
 				}
 
@@ -1331,8 +1329,6 @@ class LifeGridView extends ItemView {
 				if (mx >= 0 && mx <= gap) {
 					for (const periodData of minimapPeriods) {
 						if (my >= periodData.startY && my <= periodData.endY) {
-							minimapSvg.removeClass("life-grid-cursor-default");
-							minimapSvg.addClass("life-grid-cursor-pointer");
 							isSpecialItem = true;
 
 							// Calculate start and end ages for the period
@@ -1375,8 +1371,6 @@ class LifeGridView extends ItemView {
 				if (!isSpecialItem) {
 					for (const event of minimapEvents) {
 						if (my >= event.y && my <= event.y + event.height) {
-							minimapSvg.removeClass("life-grid-cursor-default");
-							minimapSvg.addClass("life-grid-cursor-pointer");
 							isSpecialItem = true;
 
 							// Calculate age for this event
@@ -1394,12 +1388,6 @@ class LifeGridView extends ItemView {
 							break;
 						}
 					}
-				}
-
-				// Set default cursor if not hovering over special items
-				if (!isSpecialItem) {
-					minimapSvg.removeClass("life-grid-cursor-pointer");
-					minimapSvg.addClass("life-grid-cursor-default");
 				}
 
 				// Update tooltip content
