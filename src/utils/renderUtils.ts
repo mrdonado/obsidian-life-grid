@@ -1,5 +1,5 @@
 import { TFile, moment, App, WorkspaceLeaf } from "obsidian";
-import * as Theme from "../theme";
+import * as gridConstants from "../gridConstants";
 import { getLifeGridCSSProperties } from "./cssUtils";
 import { calculateAge } from "./ageUtils";
 import { getLuminance, colorToHex, getNoteColor } from "./colorUtils";
@@ -72,11 +72,11 @@ export function createLifeGridSVG(
 	const css = getLifeGridCSSProperties();
 
 	// SVG grid parameters
-	const headerSquares = Theme.HEADER_SQUARES;
+	const headerSquares = gridConstants.HEADER_SQUARES;
 	const gap = css.gap;
 	const squareSize = css.squareSize;
-	const minimapWidth = Theme.calculateMinimapWidth(squareSize, gap);
-	const minimapSpaceReserved = Theme.calculateMinimapSpaceReserved(
+	const minimapWidth = gridConstants.calculateMinimapWidth(squareSize, gap);
+	const minimapSpaceReserved = gridConstants.calculateMinimapSpaceReserved(
 		minimapWidth,
 		gap
 	);
@@ -148,7 +148,10 @@ export function createMinimapSVG(
 	} = config;
 	const css = getLifeGridCSSProperties();
 	const gap = css.gap;
-	const minimapWidth = Theme.calculateMinimapWidth(css.squareSize, gap);
+	const minimapWidth = gridConstants.calculateMinimapWidth(
+		css.squareSize,
+		gap
+	);
 
 	// Create minimap SVG
 	const minimapSvg = document.createElementNS(
@@ -213,7 +216,10 @@ export function createMinimapSVG(
 			const startY =
 				minimapVerticalPadding + startProgress * usableHeight;
 			const endY = minimapVerticalPadding + endProgress * usableHeight;
-			const height = Math.max(Theme.MINIMAP_MIN_HEIGHT, endY - startY);
+			const height = Math.max(
+				gridConstants.MINIMAP_MIN_HEIGHT,
+				endY - startY
+			);
 
 			const periodRect = document.createElementNS(
 				"http://www.w3.org/2000/svg",
@@ -361,7 +367,7 @@ function renderMainGrid(
 ) {
 	const { dayToFilePath, metadataCache } = config;
 	const css = getLifeGridCSSProperties();
-	const headerSquares = Theme.HEADER_SQUARES;
+	const headerSquares = gridConstants.HEADER_SQUARES;
 	const gap = css.gap;
 	const squareSize = css.squareSize;
 
@@ -445,8 +451,10 @@ function renderMainGrid(
 			const radius =
 				baseRadius *
 				(isEvent
-					? Theme.CIRCLE_GAP * Theme.EVENT_CIRCLE_MULTIPLIER
-					: Theme.CIRCLE_GAP * Theme.REGULAR_CIRCLE_MULTIPLIER);
+					? gridConstants.CIRCLE_GAP *
+					  gridConstants.EVENT_CIRCLE_MULTIPLIER
+					: gridConstants.CIRCLE_GAP *
+					  gridConstants.REGULAR_CIRCLE_MULTIPLIER);
 
 			// Check for special borders
 			let hasEventBorder = false;
@@ -571,7 +579,7 @@ function renderYearHeaders(
 		yearText.setAttribute("fill", textColor);
 		yearText.setAttribute("font-family", css.yearHeaderFontFamily);
 		yearText.setAttribute("font-size", css.yearHeaderFontSize);
-		yearText.setAttribute("filter", Theme.YEAR_HEADER_TEXT_SHADOW);
+		yearText.setAttribute("filter", gridConstants.YEAR_HEADER_TEXT_SHADOW);
 		yearText.textContent = year.year.toString();
 		yearGroup.appendChild(yearText);
 	}
@@ -880,8 +888,9 @@ export function setupUIInteractions(
 		// Set tooltip color based on day color
 		const normalizedColor = colorToHex(hoveredDay.color);
 		const luminanceValue = getLuminance(normalizedColor);
-		const isLight = luminanceValue > Theme.LIGHT_COLOR_THRESHOLD;
-		const isVeryDark = luminanceValue < Theme.VERY_DARK_COLOR_THRESHOLD;
+		const isLight = luminanceValue > gridConstants.LIGHT_COLOR_THRESHOLD;
+		const isVeryDark =
+			luminanceValue < gridConstants.VERY_DARK_COLOR_THRESHOLD;
 
 		// Remove existing tooltip color classes
 		tooltip.removeClass("life-grid-tooltip--light-bg");
@@ -897,11 +906,11 @@ export function setupUIInteractions(
 			const whiteLuminance = getLuminance(css.whiteColor);
 			const blackLuminance = getLuminance(css.blackColor);
 			const contrastWhite =
-				(whiteLuminance + Theme.CONTRAST_OFFSET) /
-				(luminanceValue + Theme.CONTRAST_OFFSET);
+				(whiteLuminance + gridConstants.CONTRAST_OFFSET) /
+				(luminanceValue + gridConstants.CONTRAST_OFFSET);
 			const contrastBlack =
-				(luminanceValue + Theme.CONTRAST_OFFSET) /
-				(blackLuminance + Theme.CONTRAST_OFFSET);
+				(luminanceValue + gridConstants.CONTRAST_OFFSET) /
+				(blackLuminance + gridConstants.CONTRAST_OFFSET);
 			tooltip.style.background = normalizedColor;
 			tooltip.style.color =
 				contrastWhite >= contrastBlack
@@ -1082,7 +1091,10 @@ function setupMinimapInteractions(
 			const startY =
 				minimapVerticalPadding + startProgress * usableHeight;
 			const endY = minimapVerticalPadding + endProgress * usableHeight;
-			const height = Math.max(Theme.MINIMAP_MIN_HEIGHT, endY - startY);
+			const height = Math.max(
+				gridConstants.MINIMAP_MIN_HEIGHT,
+				endY - startY
+			);
 
 			minimapPeriods.push({
 				period,
@@ -1200,9 +1212,11 @@ function setupMinimapInteractions(
 		) {
 			const normalizedColor = colorToHex(specialColor);
 			const isLight =
-				getLuminance(normalizedColor) > Theme.LIGHT_COLOR_THRESHOLD;
+				getLuminance(normalizedColor) >
+				gridConstants.LIGHT_COLOR_THRESHOLD;
 			const isVeryDark =
-				getLuminance(normalizedColor) < Theme.VERY_DARK_COLOR_THRESHOLD;
+				getLuminance(normalizedColor) <
+				gridConstants.VERY_DARK_COLOR_THRESHOLD;
 
 			if (isVeryDark) {
 				tooltipDiv.style.background = css.tooltipBgColor;
@@ -1212,11 +1226,15 @@ function setupMinimapInteractions(
 				tooltipDiv.style.background = css.tooltipBgColor;
 			} else {
 				const contrastWhite =
-					(getLuminance(css.whiteColor) + Theme.CONTRAST_OFFSET) /
-					(getLuminance(normalizedColor) + Theme.CONTRAST_OFFSET);
+					(getLuminance(css.whiteColor) +
+						gridConstants.CONTRAST_OFFSET) /
+					(getLuminance(normalizedColor) +
+						gridConstants.CONTRAST_OFFSET);
 				const contrastBlack =
-					(getLuminance(normalizedColor) + Theme.CONTRAST_OFFSET) /
-					(getLuminance(css.blackColor) + Theme.CONTRAST_OFFSET);
+					(getLuminance(normalizedColor) +
+						gridConstants.CONTRAST_OFFSET) /
+					(getLuminance(css.blackColor) +
+						gridConstants.CONTRAST_OFFSET);
 				tooltipDiv.style.background = normalizedColor;
 				tooltipDiv.style.color =
 					contrastWhite >= contrastBlack

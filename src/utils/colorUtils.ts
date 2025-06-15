@@ -4,7 +4,7 @@
  * Provides functions for color conversion, luminance calculation, and color adjustments.
  */
 
-import * as Theme from "../theme";
+import * as gridConstants from "../gridConstants";
 
 /**
  * Calculate the luminance of a hex color using ITU-R BT.709 coefficients.
@@ -20,39 +20,40 @@ export function getLuminance(hex: string): number {
 	const r =
 		parseInt(
 			hex.substring(
-				Theme.HEX_RED_START,
-				Theme.HEX_RED_START + Theme.HEX_RED_LENGTH
+				gridConstants.HEX_RED_START,
+				gridConstants.HEX_RED_START + gridConstants.HEX_RED_LENGTH
 			),
 			16
-		) / Theme.RGB_NORMALIZE_FACTOR;
+		) / gridConstants.RGB_NORMALIZE_FACTOR;
 	const g =
 		parseInt(
 			hex.substring(
-				Theme.HEX_GREEN_START,
-				Theme.HEX_GREEN_START + Theme.HEX_GREEN_LENGTH
+				gridConstants.HEX_GREEN_START,
+				gridConstants.HEX_GREEN_START + gridConstants.HEX_GREEN_LENGTH
 			),
 			16
-		) / Theme.RGB_NORMALIZE_FACTOR;
+		) / gridConstants.RGB_NORMALIZE_FACTOR;
 	const b =
 		parseInt(
 			hex.substring(
-				Theme.HEX_BLUE_START,
-				Theme.HEX_BLUE_START + Theme.HEX_BLUE_LENGTH
+				gridConstants.HEX_BLUE_START,
+				gridConstants.HEX_BLUE_START + gridConstants.HEX_BLUE_LENGTH
 			),
 			16
-		) / Theme.RGB_NORMALIZE_FACTOR;
+		) / gridConstants.RGB_NORMALIZE_FACTOR;
 	const a = [r, g, b].map((v) =>
-		v <= Theme.RGB_LINEAR_THRESHOLD
-			? v / Theme.RGB_LINEAR_DIVISOR
+		v <= gridConstants.RGB_LINEAR_THRESHOLD
+			? v / gridConstants.RGB_LINEAR_DIVISOR
 			: Math.pow(
-					(v + Theme.RGB_GAMMA_OFFSET) / Theme.RGB_GAMMA_DIVISOR,
-					Theme.RGB_GAMMA_EXPONENT
+					(v + gridConstants.RGB_GAMMA_OFFSET) /
+						gridConstants.RGB_GAMMA_DIVISOR,
+					gridConstants.RGB_GAMMA_EXPONENT
 			  )
 	);
 	return (
-		Theme.LUMINANCE_RED_COEFFICIENT * a[0] +
-		Theme.LUMINANCE_GREEN_COEFFICIENT * a[1] +
-		Theme.LUMINANCE_BLUE_COEFFICIENT * a[2]
+		gridConstants.LUMINANCE_RED_COEFFICIENT * a[0] +
+		gridConstants.LUMINANCE_GREEN_COEFFICIENT * a[1] +
+		gridConstants.LUMINANCE_BLUE_COEFFICIENT * a[2]
 	);
 }
 
@@ -128,11 +129,11 @@ export function getNoteColor(
 
 	// If the period color is dark, make note color lighter
 	// If the period color is light, make note color darker
-	if (luminance < Theme.LIGHT_COLOR_THRESHOLD) {
+	if (luminance < gridConstants.LIGHT_COLOR_THRESHOLD) {
 		// Dark color: lighten it by 40-60 units
-		return adjustColor(periodColor, Theme.COLOR_LIGHTEN_AMOUNT);
+		return adjustColor(periodColor, gridConstants.COLOR_LIGHTEN_AMOUNT);
 	} else {
 		// Light color: darken it by 40-60 units
-		return adjustColor(periodColor, -Theme.COLOR_LIGHTEN_AMOUNT);
+		return adjustColor(periodColor, -gridConstants.COLOR_LIGHTEN_AMOUNT);
 	}
 }
