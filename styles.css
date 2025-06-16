@@ -40,6 +40,19 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
   --life-grid-square-size: 7.5px;
   --life-grid-grid-margin: 20px;
 
+  /* Circle and Visual Styling */
+  --life-grid-circle-gap: 0.9;
+  --life-grid-event-circle-multiplier: 1.25;
+  --life-grid-regular-circle-multiplier: 1.225;
+  --life-grid-event-border-radius-offset: 2px;
+
+  /* Color Thresholds and Adjustments */
+  --life-grid-light-color-threshold: 0.5;
+  --life-grid-color-lighten-amount: 50;
+
+  /* Text Effects */
+  --life-grid-year-header-text-shadow: drop-shadow(0 0 2px rgba(0, 0, 0, 1));
+
   /* Opacity Values */
   --life-grid-period-opacity: 0.8;
   --life-grid-decade-line-opacity: 0.3;

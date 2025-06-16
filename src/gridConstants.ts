@@ -8,9 +8,6 @@
 
 // === CALCULATION CONSTANTS ===
 
-/** Circle fill ratio within squares (90% of square space) */
-export const CIRCLE_GAP = 0.9;
-
 /** Number of squares to use for year labels */
 export const HEADER_SQUARES = 4;
 
@@ -20,31 +17,13 @@ export const MINIMAP_DOTS = 5;
 /** Cell size for spatial indexing (performance optimization) */
 export const GRID_CELL_SIZE = 50;
 
-/** Event circle size multiplier (larger than regular days) */
-export const EVENT_CIRCLE_MULTIPLIER = 1.25;
-
-/** Regular day circle size multiplier */
-export const REGULAR_CIRCLE_MULTIPLIER = 1.225;
-
 /** Minimum height for minimap elements */
 export const MINIMAP_MIN_HEIGHT = 1;
 
-/** Border radius offset for special event borders */
-export const EVENT_BORDER_RADIUS_OFFSET = 2;
-
-/** Text shadow filter for year headers */
-export const YEAR_HEADER_TEXT_SHADOW = "drop-shadow(0 0 2px rgba(0,0,0,1))";
-
-// === LUMINANCE THRESHOLDS ===
-
-/** Threshold for determining if a color is light (for contrast) */
-export const LIGHT_COLOR_THRESHOLD = 0.5;
+// === LUMINANCE THRESHOLDS (for calculations, not styling) ===
 
 /** Threshold for determining if a color is very dark (for contrast) */
 export const VERY_DARK_COLOR_THRESHOLD = 0.08;
-
-/** Amount to lighten dark period colors for note visibility */
-export const COLOR_LIGHTEN_AMOUNT = 50;
 
 // === CALCULATION CONSTANTS ===
 

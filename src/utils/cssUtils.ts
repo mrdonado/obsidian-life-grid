@@ -48,6 +48,13 @@ export interface LifeGridCSSProperties {
 	gap: number;
 	squareSize: number;
 	gridMargin: number;
+	circleGap: number;
+	eventCircleMultiplier: number;
+	regularCircleMultiplier: number;
+	eventBorderRadiusOffset: number;
+	lightColorThreshold: number;
+	colorLightenAmount: number;
+	yearHeaderTextShadow: string;
 	periodOpacity: number;
 	decadeLineOpacity: number;
 	tooltipFontSize: string;
@@ -139,6 +146,37 @@ export function getLifeGridCSSProperties(): LifeGridCSSProperties {
 		),
 		gridMargin: parseFloat(
 			getCSSCustomProperty("--life-grid-grid-margin", "20")
+		),
+
+		// Circle and Visual Styling
+		circleGap: parseFloat(
+			getCSSCustomProperty("--life-grid-circle-gap", "0.9")
+		),
+		eventCircleMultiplier: parseFloat(
+			getCSSCustomProperty("--life-grid-event-circle-multiplier", "1.25")
+		),
+		regularCircleMultiplier: parseFloat(
+			getCSSCustomProperty(
+				"--life-grid-regular-circle-multiplier",
+				"1.225"
+			)
+		),
+		eventBorderRadiusOffset: parseFloat(
+			getCSSCustomProperty("--life-grid-event-border-radius-offset", "2")
+		),
+
+		// Color Thresholds and Adjustments
+		lightColorThreshold: parseFloat(
+			getCSSCustomProperty("--life-grid-light-color-threshold", "0.5")
+		),
+		colorLightenAmount: parseFloat(
+			getCSSCustomProperty("--life-grid-color-lighten-amount", "50")
+		),
+
+		// Text Effects
+		yearHeaderTextShadow: getCSSCustomProperty(
+			"--life-grid-year-header-text-shadow",
+			"drop-shadow(0 0 2px rgba(0,0,0,1))"
 		),
 
 		// Opacity Values

@@ -165,11 +165,15 @@ export function adjustColor(hex: string, amount: number): string {
  *
  * @param periodColor The background period color (hex string or undefined)
  * @param fallbackColor The default color to use if no period color
+ * @param lightColorThreshold Threshold for determining light vs dark colors
+ * @param colorLightenAmount Amount to adjust color brightness
  * @returns Hex color string for the note
  */
 export function getNoteColor(
 	periodColor: string | undefined,
-	fallbackColor: string
+	fallbackColor: string,
+	lightColorThreshold: number = 0.5,
+	colorLightenAmount: number = 50
 ): string {
 	if (!periodColor) {
 		return fallbackColor; // Fallback to default green
@@ -179,11 +183,11 @@ export function getNoteColor(
 
 	// If the period color is dark, make note color lighter
 	// If the period color is light, make note color darker
-	if (luminance < gridConstants.LIGHT_COLOR_THRESHOLD) {
-		// Dark color: lighten it by 40-60 units
-		return adjustColor(periodColor, gridConstants.COLOR_LIGHTEN_AMOUNT);
+	if (luminance < lightColorThreshold) {
+		// Dark color: lighten it by specified amount
+		return adjustColor(periodColor, colorLightenAmount);
 	} else {
-		// Light color: darken it by 40-60 units
-		return adjustColor(periodColor, -gridConstants.COLOR_LIGHTEN_AMOUNT);
+		// Light color: darken it by specified amount
+		return adjustColor(periodColor, -colorLightenAmount);
 	}
 }

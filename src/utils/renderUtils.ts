@@ -461,7 +461,12 @@ function renderMainGrid(
 
 			if (item.periodColor) color = item.periodColor;
 			if (item.hasNote)
-				color = getNoteColor(item.periodColor, css.squareNoteColor);
+				color = getNoteColor(
+					item.periodColor,
+					css.squareNoteColor,
+					css.lightColorThreshold,
+					css.colorLightenAmount
+				);
 
 			// Use custom color property if present (overrides periodColor and note color)
 			if (item.color) {
@@ -476,8 +481,8 @@ function renderMainGrid(
 			const radius =
 				baseRadius *
 				(isEvent
-					? Theme.CIRCLE_GAP * Theme.EVENT_CIRCLE_MULTIPLIER
-					: Theme.CIRCLE_GAP * Theme.REGULAR_CIRCLE_MULTIPLIER);
+					? css.circleGap * css.eventCircleMultiplier
+					: css.circleGap * css.regularCircleMultiplier);
 
 			// Check for special borders
 			let hasEventBorder = false;
@@ -602,7 +607,7 @@ function renderYearHeaders(
 		yearText.setAttribute("fill", textColor);
 		yearText.setAttribute("font-family", css.yearHeaderFontFamily);
 		yearText.setAttribute("font-size", css.yearHeaderFontSize);
-		yearText.setAttribute("filter", Theme.YEAR_HEADER_TEXT_SHADOW);
+		yearText.setAttribute("filter", css.yearHeaderTextShadow);
 		yearText.textContent = year.year.toString();
 		yearGroup.appendChild(yearText);
 	}
@@ -924,7 +929,7 @@ export function setupUIInteractions(
 		// Set tooltip color based on day color
 		const normalizedColor = colorToHex(hoveredDay.color);
 		const luminanceValue = getLuminance(normalizedColor);
-		const isLight = luminanceValue > Theme.LIGHT_COLOR_THRESHOLD;
+		const isLight = luminanceValue > css.lightColorThreshold;
 		const isVeryDark = luminanceValue < Theme.VERY_DARK_COLOR_THRESHOLD;
 
 		// Remove existing tooltip color classes
@@ -1258,7 +1263,7 @@ function setupMinimapInteractions(
 		) {
 			const normalizedColor = colorToHex(specialColor);
 			const isLight =
-				getLuminance(normalizedColor) > Theme.LIGHT_COLOR_THRESHOLD;
+				getLuminance(normalizedColor) > css.lightColorThreshold;
 			const isVeryDark =
 				getLuminance(normalizedColor) < Theme.VERY_DARK_COLOR_THRESHOLD;
 
