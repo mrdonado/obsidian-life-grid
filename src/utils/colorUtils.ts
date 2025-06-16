@@ -65,7 +65,8 @@ export function getLuminance(hex: string): number {
  */
 export function colorToHex(color: string): string {
 	const div = document.createElement("div");
-	div.style.color = color;
+	div.addClass("life-grid-color-test");
+	div.style.setProperty("--test-color", color);
 	document.body.appendChild(div);
 	const computedColor = window.getComputedStyle(div).color;
 	document.body.removeChild(div);

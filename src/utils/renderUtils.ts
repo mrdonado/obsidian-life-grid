@@ -1,5 +1,5 @@
 import { TFile, moment, App, WorkspaceLeaf } from "obsidian";
-import * as gridConstants from "../gridConstants";
+import * as Theme from "../gridConstants";
 import { getLifeGridCSSProperties } from "./cssUtils";
 import { calculateAge } from "./ageUtils";
 import { getLuminance, colorToHex, getNoteColor } from "./colorUtils";
@@ -72,11 +72,11 @@ export function createLifeGridSVG(
 	const css = getLifeGridCSSProperties();
 
 	// SVG grid parameters
-	const headerSquares = gridConstants.HEADER_SQUARES;
+	const headerSquares = Theme.HEADER_SQUARES;
 	const gap = css.gap;
 	const squareSize = css.squareSize;
-	const minimapWidth = gridConstants.calculateMinimapWidth(squareSize, gap);
-	const minimapSpaceReserved = gridConstants.calculateMinimapSpaceReserved(
+	const minimapWidth = Theme.calculateMinimapWidth(squareSize, gap);
+	const minimapSpaceReserved = Theme.calculateMinimapSpaceReserved(
 		minimapWidth,
 		gap
 	);
@@ -96,7 +96,7 @@ export function createLifeGridSVG(
 	svg.setAttribute("width", width.toString());
 	svg.setAttribute("height", height.toString());
 	svg.addClass("life-grid-svg");
-	svg.style.height = height + "px";
+	svg.style.setProperty("--life-grid-svg-height", height + "px");
 	svg.tabIndex = 0;
 
 	// Build paint array
@@ -148,7 +148,7 @@ export function createMinimapSVG(
 	} = config;
 	const css = getLifeGridCSSProperties();
 	const gap = css.gap;
-	const minimapWidth = gridConstants.calculateMinimapWidth(
+	const minimapWidth = Theme.calculateMinimapWidth(
 		css.squareSize,
 		gap
 	);
@@ -217,7 +217,7 @@ export function createMinimapSVG(
 				minimapVerticalPadding + startProgress * usableHeight;
 			const endY = minimapVerticalPadding + endProgress * usableHeight;
 			const height = Math.max(
-				gridConstants.MINIMAP_MIN_HEIGHT,
+				Theme.MINIMAP_MIN_HEIGHT,
 				endY - startY
 			);
 
@@ -367,7 +367,7 @@ function renderMainGrid(
 ) {
 	const { dayToFilePath, metadataCache } = config;
 	const css = getLifeGridCSSProperties();
-	const headerSquares = gridConstants.HEADER_SQUARES;
+	const headerSquares = Theme.HEADER_SQUARES;
 	const gap = css.gap;
 	const squareSize = css.squareSize;
 
@@ -451,10 +451,10 @@ function renderMainGrid(
 			const radius =
 				baseRadius *
 				(isEvent
-					? gridConstants.CIRCLE_GAP *
-					  gridConstants.EVENT_CIRCLE_MULTIPLIER
-					: gridConstants.CIRCLE_GAP *
-					  gridConstants.REGULAR_CIRCLE_MULTIPLIER);
+					? Theme.CIRCLE_GAP *
+					  Theme.EVENT_CIRCLE_MULTIPLIER
+					: Theme.CIRCLE_GAP *
+					  Theme.REGULAR_CIRCLE_MULTIPLIER);
 
 			// Check for special borders
 			let hasEventBorder = false;
@@ -579,7 +579,7 @@ function renderYearHeaders(
 		yearText.setAttribute("fill", textColor);
 		yearText.setAttribute("font-family", css.yearHeaderFontFamily);
 		yearText.setAttribute("font-size", css.yearHeaderFontSize);
-		yearText.setAttribute("filter", gridConstants.YEAR_HEADER_TEXT_SHADOW);
+		yearText.setAttribute("filter", Theme.YEAR_HEADER_TEXT_SHADOW);
 		yearText.textContent = year.year.toString();
 		yearGroup.appendChild(yearText);
 	}
@@ -829,12 +829,14 @@ export function setupUIInteractions(
 				const svgMidX = rect.left + rect.width / 2;
 				if (e.clientX > svgMidX) {
 					const tooltipWidth = 200;
-					currentTooltip.style.left =
-						e.clientX - tooltipWidth - 16 + "px";
+					currentTooltip.style.setProperty("--life-grid-tooltip-left",
+						(e.clientX - tooltipWidth - 16) + "px");
 				} else {
-					currentTooltip.style.left = e.clientX + 12 + "px";
+					currentTooltip.style.setProperty("--life-grid-tooltip-left", 
+						(e.clientX + 12) + "px");
 				}
-				currentTooltip.style.top = e.clientY + 8 + "px";
+				currentTooltip.style.setProperty("--life-grid-tooltip-top", 
+					(e.clientY + 8) + "px");
 			}
 			return;
 		}
@@ -853,9 +855,6 @@ export function setupUIInteractions(
 		const tooltip = document.createElement("div");
 		tooltip.addClass("life-grid-tooltip");
 		tooltip.setAttribute("data-plugin-id", "obsidian-life-grid");
-		tooltip.style.position = "fixed";
-		tooltip.style.pointerEvents = "auto";
-		tooltip.style.zIndex = "9999";
 
 		// Hide tooltip when hovering over it
 		tooltip.addEventListener("mouseenter", () => {
@@ -888,9 +887,9 @@ export function setupUIInteractions(
 		// Set tooltip color based on day color
 		const normalizedColor = colorToHex(hoveredDay.color);
 		const luminanceValue = getLuminance(normalizedColor);
-		const isLight = luminanceValue > gridConstants.LIGHT_COLOR_THRESHOLD;
+		const isLight = luminanceValue > Theme.LIGHT_COLOR_THRESHOLD;
 		const isVeryDark =
-			luminanceValue < gridConstants.VERY_DARK_COLOR_THRESHOLD;
+			luminanceValue < Theme.VERY_DARK_COLOR_THRESHOLD;
 
 		// Remove existing tooltip color classes
 		tooltip.removeClass("life-grid-tooltip--light-bg");
@@ -900,22 +899,22 @@ export function setupUIInteractions(
 		if (isVeryDark) {
 			tooltip.addClass("life-grid-tooltip--very-dark");
 		} else if (isLight) {
-			tooltip.style.color = normalizedColor;
+			tooltip.style.setProperty("--life-grid-tooltip-custom-color", normalizedColor);
 			tooltip.addClass("life-grid-tooltip--light-bg");
 		} else {
 			const whiteLuminance = getLuminance(css.whiteColor);
 			const blackLuminance = getLuminance(css.blackColor);
 			const contrastWhite =
-				(whiteLuminance + gridConstants.CONTRAST_OFFSET) /
-				(luminanceValue + gridConstants.CONTRAST_OFFSET);
+				(whiteLuminance + Theme.CONTRAST_OFFSET) /
+				(luminanceValue + Theme.CONTRAST_OFFSET);
 			const contrastBlack =
-				(luminanceValue + gridConstants.CONTRAST_OFFSET) /
-				(blackLuminance + gridConstants.CONTRAST_OFFSET);
-			tooltip.style.background = normalizedColor;
-			tooltip.style.color =
+				(luminanceValue + Theme.CONTRAST_OFFSET) /
+				(blackLuminance + Theme.CONTRAST_OFFSET);
+			tooltip.style.setProperty("--life-grid-tooltip-custom-bg", normalizedColor);
+			tooltip.style.setProperty("--life-grid-tooltip-custom-color",
 				contrastWhite >= contrastBlack
 					? css.whiteColor
-					: css.blackColor;
+					: css.blackColor);
 			tooltip.addClass("life-grid-tooltip--colored-bg");
 		}
 
@@ -923,11 +922,13 @@ export function setupUIInteractions(
 		const svgMidX = rect.left + rect.width / 2;
 		if (e.clientX > svgMidX) {
 			const tooltipWidth = 200;
-			tooltip.style.left = e.clientX - tooltipWidth - 16 + "px";
+			tooltip.style.setProperty("--life-grid-tooltip-left", (e.clientX - tooltipWidth - 16) + "px");
+			tooltip.addClass("life-grid-tooltip--left");
 		} else {
-			tooltip.style.left = e.clientX + 12 + "px";
+			tooltip.style.setProperty("--life-grid-tooltip-left", (e.clientX + 12) + "px");
+			tooltip.addClass("life-grid-tooltip--right");
 		}
-		tooltip.style.top = e.clientY + 8 + "px";
+		tooltip.style.setProperty("--life-grid-tooltip-top", (e.clientY + 8) + "px");
 
 		document.body.appendChild(tooltip);
 		currentTooltip = tooltip;
@@ -1092,7 +1093,7 @@ function setupMinimapInteractions(
 				minimapVerticalPadding + startProgress * usableHeight;
 			const endY = minimapVerticalPadding + endProgress * usableHeight;
 			const height = Math.max(
-				gridConstants.MINIMAP_MIN_HEIGHT,
+				Theme.MINIMAP_MIN_HEIGHT,
 				endY - startY
 			);
 
@@ -1132,9 +1133,6 @@ function setupMinimapInteractions(
 		if (!tooltipDiv) {
 			tooltipDiv = document.createElement("div");
 			tooltipDiv.addClass("life-grid-tooltip");
-			tooltipDiv.style.position = "fixed";
-			tooltipDiv.style.pointerEvents = "auto";
-			tooltipDiv.style.zIndex = "9999";
 			document.body.appendChild(tooltipDiv);
 
 			tooltipDiv.addEventListener("mouseenter", () => {
@@ -1213,43 +1211,51 @@ function setupMinimapInteractions(
 			const normalizedColor = colorToHex(specialColor);
 			const isLight =
 				getLuminance(normalizedColor) >
-				gridConstants.LIGHT_COLOR_THRESHOLD;
+				Theme.LIGHT_COLOR_THRESHOLD;
 			const isVeryDark =
 				getLuminance(normalizedColor) <
-				gridConstants.VERY_DARK_COLOR_THRESHOLD;
+				Theme.VERY_DARK_COLOR_THRESHOLD;
+
+			// Remove existing tooltip color classes
+			tooltipDiv.removeClass("life-grid-tooltip--light-bg");
+			tooltipDiv.removeClass("life-grid-tooltip--colored-bg");
+			tooltipDiv.removeClass("life-grid-tooltip--very-dark");
 
 			if (isVeryDark) {
-				tooltipDiv.style.background = css.tooltipBgColor;
-				tooltipDiv.style.color = css.whiteColor;
+				tooltipDiv.addClass("life-grid-tooltip--very-dark");
 			} else if (isLight) {
-				tooltipDiv.style.color = normalizedColor;
-				tooltipDiv.style.background = css.tooltipBgColor;
+				tooltipDiv.style.setProperty("--life-grid-tooltip-custom-color", normalizedColor);
+				tooltipDiv.addClass("life-grid-tooltip--light-bg");
 			} else {
 				const contrastWhite =
 					(getLuminance(css.whiteColor) +
-						gridConstants.CONTRAST_OFFSET) /
+						Theme.CONTRAST_OFFSET) /
 					(getLuminance(normalizedColor) +
-						gridConstants.CONTRAST_OFFSET);
+						Theme.CONTRAST_OFFSET);
 				const contrastBlack =
 					(getLuminance(normalizedColor) +
-						gridConstants.CONTRAST_OFFSET) /
+						Theme.CONTRAST_OFFSET) /
 					(getLuminance(css.blackColor) +
-						gridConstants.CONTRAST_OFFSET);
-				tooltipDiv.style.background = normalizedColor;
-				tooltipDiv.style.color =
+						Theme.CONTRAST_OFFSET);
+				tooltipDiv.style.setProperty("--life-grid-tooltip-custom-bg", normalizedColor);
+				tooltipDiv.style.setProperty("--life-grid-tooltip-custom-color",
 					contrastWhite >= contrastBlack
 						? css.whiteColor
-						: css.blackColor;
+						: css.blackColor);
+				tooltipDiv.addClass("life-grid-tooltip--colored-bg");
 			}
 		} else {
-			tooltipDiv.style.color = css.tooltipTextColor;
-			tooltipDiv.style.background = css.tooltipBgColor;
+			// Remove color classes and use default styling
+			tooltipDiv.removeClass("life-grid-tooltip--light-bg");
+			tooltipDiv.removeClass("life-grid-tooltip--colored-bg");
+			tooltipDiv.removeClass("life-grid-tooltip--very-dark");
 		}
 
 		// Position tooltip
-		tooltipDiv.style.left =
-			e.clientX - (tooltipDiv.offsetWidth || 200) - 16 + "px";
-		tooltipDiv.style.top = e.clientY + 8 + "px";
+		tooltipDiv.style.setProperty("--life-grid-tooltip-left", 
+			(e.clientX - (tooltipDiv.offsetWidth || 200) - 16) + "px");
+		tooltipDiv.style.setProperty("--life-grid-tooltip-top", (e.clientY + 8) + "px");
+		tooltipDiv.addClass("life-grid-tooltip--left");
 	};
 
 	minimapSvg.addEventListener("mousemove", minimapMousemoveHandler);

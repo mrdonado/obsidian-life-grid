@@ -116,8 +116,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 		// Container for all periods
 		const periodsContainer = containerEl.createEl("div");
-		periodsContainer.style.marginBottom =
-			css.periodsContainerMarginBottom || "20px";
+		periodsContainer.addClass("life-grid-periods-container");
 
 		const renderPeriods = () => {
 			periodsContainer.empty();
@@ -147,11 +146,10 @@ export class LifeGridSettingTab extends PluginSettingTab {
 		css: any
 	): void {
 		const periodDiv = container.createEl("div");
-		periodDiv.style.border = css.periodDivBorder;
-		periodDiv.style.borderRadius = css.periodDivBorderRadius;
-		periodDiv.style.padding = css.periodDivPadding;
-		periodDiv.style.marginBottom = css.periodDivMarginBottom;
-		periodDiv.style.backgroundColor = "var(--background-secondary)";
+		periodDiv.addClass("life-grid-period-div");
+		if (period.color) {
+			periodDiv.style.setProperty("--life-grid-period-label-color", period.color);
+		}
 
 		// Period header with label and delete button
 		this.renderPeriodHeader(periodDiv, period, index, renderPeriods, css);
@@ -168,21 +166,16 @@ export class LifeGridSettingTab extends PluginSettingTab {
 		css: any
 	): void {
 		const headerDiv = periodDiv.createEl("div");
-		headerDiv.style.display = "flex";
-		headerDiv.style.justifyContent = "space-between";
-		headerDiv.style.alignItems = "center";
-		headerDiv.style.marginBottom = css.periodHeaderMarginBottom;
+		headerDiv.addClass("life-grid-period-header");
 
 		const headerLabel = headerDiv.createEl("h4");
 		headerLabel.textContent = period.label || `Period ${index + 1}`;
-		headerLabel.style.margin = "0";
-		headerLabel.style.color = period.color || "var(--text-normal)";
+		headerLabel.addClass("life-grid-period-header-label");
 
 		const deleteButton = headerDiv.createEl("button");
 		deleteButton.textContent = "Delete";
 		deleteButton.className = "mod-destructive";
-		deleteButton.style.padding = css.deleteButtonPadding;
-		deleteButton.style.fontSize = css.deleteButtonFontSize;
+		deleteButton.addClass("life-grid-delete-button");
 		deleteButton.onclick = async () => {
 			this.plugin.settings.periods?.splice(index, 1);
 			await this.plugin.saveSettings();
@@ -267,9 +260,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 		const addButton = container.createEl("button");
 		addButton.textContent = "+ Add New Period";
 		addButton.className = "mod-cta";
-		addButton.style.width = "100%";
-		addButton.style.padding = css.addButtonPadding;
-		addButton.style.marginTop = css.addButtonMarginTop;
+		addButton.addClass("life-grid-add-button");
 		addButton.onclick = async () => {
 			if (!this.plugin.settings.periods) {
 				this.plugin.settings.periods = [];
@@ -291,19 +282,15 @@ export class LifeGridSettingTab extends PluginSettingTab {
 		css: any
 	): void {
 		const advancedDiv = container.createEl("div");
-		advancedDiv.style.marginTop = css.advancedSectionMarginTop;
+		advancedDiv.addClass("life-grid-advanced-section");
 
 		const toggleButton = advancedDiv.createEl("button");
 		toggleButton.textContent = "▶ Advanced: Edit as JSON";
-		toggleButton.style.background = "none";
-		toggleButton.style.border = "none";
-		toggleButton.style.color = "var(--text-muted)";
-		toggleButton.style.cursor = "pointer";
-		toggleButton.style.fontSize = css.toggleButtonFontSize;
+		toggleButton.addClass("life-grid-toggle-button");
 
 		const jsonContainer = advancedDiv.createEl("div");
+		jsonContainer.addClass("life-grid-json-container");
 		jsonContainer.style.display = "none";
-		jsonContainer.style.marginTop = css.jsonContainerMarginTop;
 
 		let isJsonVisible = false;
 
@@ -355,9 +342,9 @@ export class LifeGridSettingTab extends PluginSettingTab {
 						}
 					});
 				text.inputEl.rows = 8;
+				text.inputEl.addClass("life-grid-json-textarea");
 				text.inputEl.style.width = "100%";
 				text.inputEl.style.fontFamily = "monospace";
-				text.inputEl.style.fontSize = css.jsonTextareaFontSize;
 			});
 	}
 }
