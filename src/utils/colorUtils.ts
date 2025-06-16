@@ -58,27 +58,76 @@ export function getLuminance(hex: string): number {
 }
 
 /**
- * Convert color names or rgb() values to hex format.
+ * Convert color names or rgb() values to hex format using pure JavaScript parsing.
  *
  * @param color Color string (name, rgb(), rgba(), or hex)
  * @returns Hex color string
  */
 export function colorToHex(color: string): string {
-	const div = document.createElement("div");
-	div.addClass("life-grid-color-test");
-	div.style.setProperty("--test-color", color);
-	document.body.appendChild(div);
-	const computedColor = window.getComputedStyle(div).color;
-	document.body.removeChild(div);
+	// Remove whitespace and convert to lowercase for consistency
+	const cleanColor = color.trim().toLowerCase();
 
-	const match = computedColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-	if (match) {
-		const r = parseInt(match[1]).toString(16).padStart(2, "0");
-		const g = parseInt(match[2]).toString(16).padStart(2, "0");
-		const b = parseInt(match[3]).toString(16).padStart(2, "0");
+	// If it's already hex, just return it (with # prefix)
+	if (cleanColor.startsWith("#")) {
+		return cleanColor;
+	}
+	if (/^[0-9a-f]{6}$/i.test(cleanColor)) {
+		return `#${cleanColor}`;
+	}
+	if (/^[0-9a-f]{3}$/i.test(cleanColor)) {
+		return `#${cleanColor}`;
+	}
+
+	// Handle rgb() and rgba() formats
+	const rgbMatch = cleanColor.match(
+		/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/
+	);
+	if (rgbMatch) {
+		const r = parseInt(rgbMatch[1]).toString(16).padStart(2, "0");
+		const g = parseInt(rgbMatch[2]).toString(16).padStart(2, "0");
+		const b = parseInt(rgbMatch[3]).toString(16).padStart(2, "0");
 		return `#${r}${g}${b}`;
 	}
-	return color; // Fallback if regex doesn't match or color is already hex
+
+	// Handle common color names
+	const colorNames: { [key: string]: string } = {
+		red: "#ff0000",
+		green: "#008000",
+		blue: "#0000ff",
+		yellow: "#ffff00",
+		orange: "#ffa500",
+		purple: "#800080",
+		pink: "#ffc0cb",
+		brown: "#a52a2a",
+		black: "#000000",
+		white: "#ffffff",
+		gray: "#808080",
+		grey: "#808080",
+		cyan: "#00ffff",
+		magenta: "#ff00ff",
+		lime: "#00ff00",
+		maroon: "#800000",
+		navy: "#000080",
+		olive: "#808000",
+		teal: "#008080",
+		silver: "#c0c0c0",
+		gold: "#ffd700",
+		violet: "#ee82ee",
+		indigo: "#4b0082",
+		turquoise: "#40e0d0",
+		coral: "#ff7f50",
+		salmon: "#fa8072",
+		khaki: "#f0e68c",
+		crimson: "#dc143c",
+		orchid: "#da70d6",
+	};
+
+	if (colorNames[cleanColor]) {
+		return colorNames[cleanColor];
+	}
+
+	// If we can't parse it, return it as-is (might be a CSS variable or unknown format)
+	return color;
 }
 
 /**

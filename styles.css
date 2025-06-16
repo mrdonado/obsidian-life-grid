@@ -289,10 +289,3 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
 .life-grid-json-textarea {
   font-size: var(--life-grid-json-textarea-font-size, 12px);
 }
-
-/* Utility class for color conversion */
-.life-grid-color-test {
-  position: absolute;
-  visibility: hidden;
-  color: var(--test-color, inherit);
-}
