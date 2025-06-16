@@ -1,6 +1,13 @@
-import { TFile, moment, App, WorkspaceLeaf } from "obsidian";
+import {
+	TFile,
+	moment,
+	App,
+	WorkspaceLeaf,
+	MetadataCache,
+	Plugin,
+} from "obsidian";
 import * as Theme from "../gridConstants";
-import { getLifeGridCSSProperties } from "./cssUtils";
+import { getLifeGridCSSProperties, LifeGridCSSProperties } from "./cssUtils";
 import { calculateAge } from "./ageUtils";
 import { getLuminance, colorToHex, getNoteColor } from "./colorUtils";
 import { SpatialIndex, ClickableDay } from "./spatialUtils";
@@ -8,6 +15,7 @@ import {
 	getFormattedDateString,
 	getDailyNoteFilePath,
 } from "./dailyNotesUtils";
+import { LifeGridSettings } from "../types/Settings";
 
 /**
  * Configuration for rendering the Life Grid SVG
@@ -28,7 +36,7 @@ export interface LifeGridRenderConfig {
 	}>;
 	containerWidth: number;
 	dailyNoteFormat: string;
-	metadataCache: any; // Obsidian's MetadataCache
+	metadataCache: MetadataCache;
 	files: TFile[];
 }
 
@@ -58,6 +66,29 @@ export interface DayPaint {
 	hasNote: boolean;
 	periodColor?: string;
 	color?: string;
+}
+
+/**
+ * Year header data structure
+ */
+export interface YearHeaderData {
+	year: number;
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+	textX: number;
+	textY: number;
+}
+
+/**
+ * Circle rendering data structure
+ */
+export interface CircleData {
+	cx: number;
+	cy: number;
+	r: number;
+	hasSpecialBorder?: boolean;
 }
 
 /**
@@ -148,10 +179,7 @@ export function createMinimapSVG(
 	} = config;
 	const css = getLifeGridCSSProperties();
 	const gap = css.gap;
-	const minimapWidth = Theme.calculateMinimapWidth(
-		css.squareSize,
-		gap
-	);
+	const minimapWidth = Theme.calculateMinimapWidth(css.squareSize, gap);
 
 	// Create minimap SVG
 	const minimapSvg = document.createElementNS(
@@ -185,7 +213,7 @@ export function createMinimapSVG(
 	ghostPeriodRect.setAttribute("width", gap.toString());
 	ghostPeriodRect.setAttribute("height", "100%");
 	ghostPeriodRect.setAttribute("fill", ghostPeriodColor);
-	ghostPeriodRect.setAttribute("opacity", decadeLineOpacity);
+	ghostPeriodRect.setAttribute("opacity", decadeLineOpacity.toString());
 	minimapSvg.appendChild(ghostPeriodRect);
 
 	// Draw periods
@@ -216,10 +244,7 @@ export function createMinimapSVG(
 			const startY =
 				minimapVerticalPadding + startProgress * usableHeight;
 			const endY = minimapVerticalPadding + endProgress * usableHeight;
-			const height = Math.max(
-				Theme.MINIMAP_MIN_HEIGHT,
-				endY - startY
-			);
+			const height = Math.max(Theme.MINIMAP_MIN_HEIGHT, endY - startY);
 
 			const periodRect = document.createElementNS(
 				"http://www.w3.org/2000/svg",
@@ -230,7 +255,7 @@ export function createMinimapSVG(
 			periodRect.setAttribute("width", gap.toString());
 			periodRect.setAttribute("height", height.toString());
 			periodRect.setAttribute("fill", period.color);
-			periodRect.setAttribute("opacity", periodOpacity);
+			periodRect.setAttribute("opacity", periodOpacity.toString());
 			periodRect.classList.add("life-grid-cursor-pointer");
 			minimapSvg.appendChild(periodRect);
 		}
@@ -250,7 +275,7 @@ export function createMinimapSVG(
 		line.setAttribute("y2", y.toString());
 		line.setAttribute("stroke", decadeLineColor);
 		line.setAttribute("stroke-width", decadeLineStrokeWidth);
-		line.setAttribute("opacity", decadeLineOpacity);
+		line.setAttribute("opacity", decadeLineOpacity.toString());
 		minimapSvg.appendChild(line);
 	}
 
@@ -451,10 +476,8 @@ function renderMainGrid(
 			const radius =
 				baseRadius *
 				(isEvent
-					? Theme.CIRCLE_GAP *
-					  Theme.EVENT_CIRCLE_MULTIPLIER
-					: Theme.CIRCLE_GAP *
-					  Theme.REGULAR_CIRCLE_MULTIPLIER);
+					? Theme.CIRCLE_GAP * Theme.EVENT_CIRCLE_MULTIPLIER
+					: Theme.CIRCLE_GAP * Theme.REGULAR_CIRCLE_MULTIPLIER);
 
 			// Check for special borders
 			let hasEventBorder = false;
@@ -518,8 +541,8 @@ function renderMainGrid(
  */
 function renderYearHeaders(
 	fragment: DocumentFragment,
-	yearData: any[],
-	css: any
+	yearData: YearHeaderData[],
+	css: LifeGridCSSProperties
 ) {
 	const yearGroup = document.createElementNS(
 		"http://www.w3.org/2000/svg",
@@ -592,8 +615,8 @@ function renderYearHeaders(
  */
 function renderCircles(
 	fragment: DocumentFragment,
-	circlesByColor: Map<string, any[]>,
-	css: any
+	circlesByColor: Map<string, CircleData[]>,
+	css: LifeGridCSSProperties
 ) {
 	// Ultra-optimized circle rendering using single path elements per color
 	for (const [colorKey, circles] of circlesByColor) {
@@ -675,7 +698,7 @@ function renderCircles(
 function collectEvents(
 	paintArray: Array<YearPaint | DayPaint>,
 	dayToFilePath: { [key: string]: string },
-	metadataCache: any,
+	metadataCache: MetadataCache,
 	startDate: Date,
 	dailyNoteFormat: string
 ): Array<{
@@ -720,12 +743,20 @@ function collectEvents(
 }
 
 /**
+ * Plugin interface for accessing required methods and properties
+ */
+export interface LifeGridPluginInterface {
+	settings: LifeGridSettings;
+	openFileInNewTab(file: TFile): Promise<void>;
+}
+
+/**
  * Configuration for UI interactions
  */
 export interface UIInteractionConfig extends LifeGridRenderConfig {
 	app: App;
 	leaf: WorkspaceLeaf;
-	plugin: any; // The plugin instance for accessing methods
+	plugin: LifeGridPluginInterface; // The plugin instance for accessing methods
 	cleanupFunctions: Array<() => void>;
 }
 
@@ -829,14 +860,20 @@ export function setupUIInteractions(
 				const svgMidX = rect.left + rect.width / 2;
 				if (e.clientX > svgMidX) {
 					const tooltipWidth = 200;
-					currentTooltip.style.setProperty("--life-grid-tooltip-left",
-						(e.clientX - tooltipWidth - 16) + "px");
+					currentTooltip.style.setProperty(
+						"--life-grid-tooltip-left",
+						e.clientX - tooltipWidth - 16 + "px"
+					);
 				} else {
-					currentTooltip.style.setProperty("--life-grid-tooltip-left", 
-						(e.clientX + 12) + "px");
+					currentTooltip.style.setProperty(
+						"--life-grid-tooltip-left",
+						e.clientX + 12 + "px"
+					);
 				}
-				currentTooltip.style.setProperty("--life-grid-tooltip-top", 
-					(e.clientY + 8) + "px");
+				currentTooltip.style.setProperty(
+					"--life-grid-tooltip-top",
+					e.clientY + 8 + "px"
+				);
 			}
 			return;
 		}
@@ -888,8 +925,7 @@ export function setupUIInteractions(
 		const normalizedColor = colorToHex(hoveredDay.color);
 		const luminanceValue = getLuminance(normalizedColor);
 		const isLight = luminanceValue > Theme.LIGHT_COLOR_THRESHOLD;
-		const isVeryDark =
-			luminanceValue < Theme.VERY_DARK_COLOR_THRESHOLD;
+		const isVeryDark = luminanceValue < Theme.VERY_DARK_COLOR_THRESHOLD;
 
 		// Remove existing tooltip color classes
 		tooltip.removeClass("life-grid-tooltip--light-bg");
@@ -899,7 +935,10 @@ export function setupUIInteractions(
 		if (isVeryDark) {
 			tooltip.addClass("life-grid-tooltip--very-dark");
 		} else if (isLight) {
-			tooltip.style.setProperty("--life-grid-tooltip-custom-color", normalizedColor);
+			tooltip.style.setProperty(
+				"--life-grid-tooltip-custom-color",
+				normalizedColor
+			);
 			tooltip.addClass("life-grid-tooltip--light-bg");
 		} else {
 			const whiteLuminance = getLuminance(css.whiteColor);
@@ -910,11 +949,14 @@ export function setupUIInteractions(
 			const contrastBlack =
 				(luminanceValue + Theme.CONTRAST_OFFSET) /
 				(blackLuminance + Theme.CONTRAST_OFFSET);
-			tooltip.style.setProperty("--life-grid-tooltip-custom-bg", normalizedColor);
-			tooltip.style.setProperty("--life-grid-tooltip-custom-color",
-				contrastWhite >= contrastBlack
-					? css.whiteColor
-					: css.blackColor);
+			tooltip.style.setProperty(
+				"--life-grid-tooltip-custom-bg",
+				normalizedColor
+			);
+			tooltip.style.setProperty(
+				"--life-grid-tooltip-custom-color",
+				contrastWhite >= contrastBlack ? css.whiteColor : css.blackColor
+			);
 			tooltip.addClass("life-grid-tooltip--colored-bg");
 		}
 
@@ -922,13 +964,22 @@ export function setupUIInteractions(
 		const svgMidX = rect.left + rect.width / 2;
 		if (e.clientX > svgMidX) {
 			const tooltipWidth = 200;
-			tooltip.style.setProperty("--life-grid-tooltip-left", (e.clientX - tooltipWidth - 16) + "px");
+			tooltip.style.setProperty(
+				"--life-grid-tooltip-left",
+				e.clientX - tooltipWidth - 16 + "px"
+			);
 			tooltip.addClass("life-grid-tooltip--left");
 		} else {
-			tooltip.style.setProperty("--life-grid-tooltip-left", (e.clientX + 12) + "px");
+			tooltip.style.setProperty(
+				"--life-grid-tooltip-left",
+				e.clientX + 12 + "px"
+			);
 			tooltip.addClass("life-grid-tooltip--right");
 		}
-		tooltip.style.setProperty("--life-grid-tooltip-top", (e.clientY + 8) + "px");
+		tooltip.style.setProperty(
+			"--life-grid-tooltip-top",
+			e.clientY + 8 + "px"
+		);
 
 		document.body.appendChild(tooltip);
 		currentTooltip = tooltip;
@@ -1092,10 +1143,7 @@ function setupMinimapInteractions(
 			const startY =
 				minimapVerticalPadding + startProgress * usableHeight;
 			const endY = minimapVerticalPadding + endProgress * usableHeight;
-			const height = Math.max(
-				Theme.MINIMAP_MIN_HEIGHT,
-				endY - startY
-			);
+			const height = Math.max(Theme.MINIMAP_MIN_HEIGHT, endY - startY);
 
 			minimapPeriods.push({
 				period,
@@ -1210,11 +1258,9 @@ function setupMinimapInteractions(
 		) {
 			const normalizedColor = colorToHex(specialColor);
 			const isLight =
-				getLuminance(normalizedColor) >
-				Theme.LIGHT_COLOR_THRESHOLD;
+				getLuminance(normalizedColor) > Theme.LIGHT_COLOR_THRESHOLD;
 			const isVeryDark =
-				getLuminance(normalizedColor) <
-				Theme.VERY_DARK_COLOR_THRESHOLD;
+				getLuminance(normalizedColor) < Theme.VERY_DARK_COLOR_THRESHOLD;
 
 			// Remove existing tooltip color classes
 			tooltipDiv.removeClass("life-grid-tooltip--light-bg");
@@ -1224,24 +1270,28 @@ function setupMinimapInteractions(
 			if (isVeryDark) {
 				tooltipDiv.addClass("life-grid-tooltip--very-dark");
 			} else if (isLight) {
-				tooltipDiv.style.setProperty("--life-grid-tooltip-custom-color", normalizedColor);
+				tooltipDiv.style.setProperty(
+					"--life-grid-tooltip-custom-color",
+					normalizedColor
+				);
 				tooltipDiv.addClass("life-grid-tooltip--light-bg");
 			} else {
 				const contrastWhite =
-					(getLuminance(css.whiteColor) +
-						Theme.CONTRAST_OFFSET) /
-					(getLuminance(normalizedColor) +
-						Theme.CONTRAST_OFFSET);
+					(getLuminance(css.whiteColor) + Theme.CONTRAST_OFFSET) /
+					(getLuminance(normalizedColor) + Theme.CONTRAST_OFFSET);
 				const contrastBlack =
-					(getLuminance(normalizedColor) +
-						Theme.CONTRAST_OFFSET) /
-					(getLuminance(css.blackColor) +
-						Theme.CONTRAST_OFFSET);
-				tooltipDiv.style.setProperty("--life-grid-tooltip-custom-bg", normalizedColor);
-				tooltipDiv.style.setProperty("--life-grid-tooltip-custom-color",
+					(getLuminance(normalizedColor) + Theme.CONTRAST_OFFSET) /
+					(getLuminance(css.blackColor) + Theme.CONTRAST_OFFSET);
+				tooltipDiv.style.setProperty(
+					"--life-grid-tooltip-custom-bg",
+					normalizedColor
+				);
+				tooltipDiv.style.setProperty(
+					"--life-grid-tooltip-custom-color",
 					contrastWhite >= contrastBlack
 						? css.whiteColor
-						: css.blackColor);
+						: css.blackColor
+				);
 				tooltipDiv.addClass("life-grid-tooltip--colored-bg");
 			}
 		} else {
@@ -1252,9 +1302,14 @@ function setupMinimapInteractions(
 		}
 
 		// Position tooltip
-		tooltipDiv.style.setProperty("--life-grid-tooltip-left", 
-			(e.clientX - (tooltipDiv.offsetWidth || 200) - 16) + "px");
-		tooltipDiv.style.setProperty("--life-grid-tooltip-top", (e.clientY + 8) + "px");
+		tooltipDiv.style.setProperty(
+			"--life-grid-tooltip-left",
+			e.clientX - (tooltipDiv.offsetWidth || 200) - 16 + "px"
+		);
+		tooltipDiv.style.setProperty(
+			"--life-grid-tooltip-top",
+			e.clientY + 8 + "px"
+		);
 		tooltipDiv.addClass("life-grid-tooltip--left");
 	};
 

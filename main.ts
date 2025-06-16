@@ -141,6 +141,7 @@ export default class LifeGridPlugin extends Plugin {
 class LifeGridView extends ItemView {
 	plugin: LifeGridPlugin;
 	private resizeHandler?: () => void;
+	private resizeTimeout?: NodeJS.Timeout;
 	private cleanupFunctions: (() => void)[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: LifeGridPlugin) {
@@ -338,8 +339,8 @@ class LifeGridView extends ItemView {
 
 		// Setup window resize handler
 		this.resizeHandler = () => {
-			clearTimeout((this as any).resizeTimeout);
-			(this as any).resizeTimeout = setTimeout(() => {
+			clearTimeout(this.resizeTimeout);
+			this.resizeTimeout = setTimeout(() => {
 				try {
 					this.onOpen();
 				} catch (error) {
@@ -355,8 +356,8 @@ class LifeGridView extends ItemView {
 			if (this.resizeHandler) {
 				window.removeEventListener("resize", this.resizeHandler);
 			}
-			if ((this as any).resizeTimeout) {
-				clearTimeout((this as any).resizeTimeout);
+			if (this.resizeTimeout) {
+				clearTimeout(this.resizeTimeout);
 			}
 		});
 
@@ -396,9 +397,9 @@ class LifeGridView extends ItemView {
 		}
 
 		// Clear any pending resize timeout
-		if ((this as any).resizeTimeout) {
-			clearTimeout((this as any).resizeTimeout);
-			(this as any).resizeTimeout = undefined;
+		if (this.resizeTimeout) {
+			clearTimeout(this.resizeTimeout);
+			this.resizeTimeout = undefined;
 		}
 
 		// Clean up any remaining tooltips that belong to this plugin only

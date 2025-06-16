@@ -18,9 +18,67 @@ export function getCSSCustomProperty(
 }
 
 /**
+ * Interface for Life Grid CSS properties
+ */
+export interface LifeGridCSSProperties {
+	gridBgColor: string;
+	squareDefaultColor: string;
+	squareBorderColor: string;
+	squareNoteColor: string;
+	squareTodayBorderColor: string;
+	yearHeaderBgColor: string;
+	yearHeaderTextColor: string;
+	yearHeaderPaddingHorizontal: number;
+	yearHeaderPaddingVertical: number;
+	yearHeaderHeightExtension: number;
+	yearHeaderBorderRadius: string;
+	yearHeaderFontFamily: string;
+	yearHeaderFontSize: string;
+	milestoneHeaderBgColor: string;
+	milestoneHeaderTextColor: string;
+	tooltipBgColor: string;
+	tooltipTextColor: string;
+	ghostPeriodColor: string;
+	decadeLineColor: string;
+	defaultPeriodColor: string;
+	whiteColor: string;
+	blackColor: string;
+	squareBorderWidth: number;
+	squareTodayBorderWidth: number;
+	gap: number;
+	squareSize: number;
+	gridMargin: number;
+	periodOpacity: number;
+	decadeLineOpacity: number;
+	tooltipFontSize: string;
+	tooltipPadding: string;
+	tooltipBorderRadius: string;
+	periodsContainerMarginBottom: string;
+	periodDivBorder: string;
+	periodDivBorderRadius: string;
+	periodDivPadding: string;
+	periodDivMarginBottom: string;
+	periodHeaderMarginBottom: string;
+	deleteButtonPadding: string;
+	deleteButtonFontSize: string;
+	addButtonPadding: string;
+	addButtonMarginTop: string;
+	advancedSectionMarginTop: string;
+	toggleButtonFontSize: string;
+	jsonContainerMarginTop: string;
+	jsonTextareaFontSize: string;
+	minimapBorderRadius: string;
+	minimapMargin: string;
+	minimapVerticalPadding: number;
+	minimapLineHeight: number;
+	decadeLineStrokeWidth: string;
+	eventLineMargin: number;
+}
+
+/**
  * Get all CSS custom properties for Life Grid styling
  */
-export function getLifeGridCSSProperties() {
+export function getLifeGridCSSProperties(): LifeGridCSSProperties {
 	return {
 		// Grid Colors
 		gridBgColor: getCSSCustomProperty("--life-grid-bg-color"),
@@ -84,9 +142,11 @@ export function getLifeGridCSSProperties() {
 		),
 
 		// Opacity Values
-		periodOpacity: getCSSCustomProperty("--life-grid-period-opacity"),
-		decadeLineOpacity: getCSSCustomProperty(
-			"--life-grid-decade-line-opacity"
+		periodOpacity: parseFloat(
+			getCSSCustomProperty("--life-grid-period-opacity", "0.3")
+		),
+		decadeLineOpacity: parseFloat(
+			getCSSCustomProperty("--life-grid-decade-line-opacity", "0.3")
 		),
 
 		// Tooltip Styling
@@ -94,6 +154,48 @@ export function getLifeGridCSSProperties() {
 		tooltipPadding: getCSSCustomProperty("--life-grid-tooltip-padding"),
 		tooltipBorderRadius: getCSSCustomProperty(
 			"--life-grid-tooltip-border-radius"
+		),
+
+		// Periods Container Styling
+		periodsContainerMarginBottom: getCSSCustomProperty(
+			"--life-grid-periods-container-margin-bottom"
+		),
+		periodDivBorder: getCSSCustomProperty("--life-grid-period-div-border"),
+		periodDivBorderRadius: getCSSCustomProperty(
+			"--life-grid-period-div-border-radius"
+		),
+		periodDivPadding: getCSSCustomProperty(
+			"--life-grid-period-div-padding"
+		),
+		periodDivMarginBottom: getCSSCustomProperty(
+			"--life-grid-period-div-margin-bottom"
+		),
+		periodHeaderMarginBottom: getCSSCustomProperty(
+			"--life-grid-period-header-margin-bottom"
+		),
+		deleteButtonPadding: getCSSCustomProperty(
+			"--life-grid-delete-button-padding"
+		),
+		deleteButtonFontSize: getCSSCustomProperty(
+			"--life-grid-delete-button-font-size"
+		),
+		addButtonPadding: getCSSCustomProperty(
+			"--life-grid-add-button-padding"
+		),
+		addButtonMarginTop: getCSSCustomProperty(
+			"--life-grid-add-button-margin-top"
+		),
+		advancedSectionMarginTop: getCSSCustomProperty(
+			"--life-grid-advanced-section-margin-top"
+		),
+		toggleButtonFontSize: getCSSCustomProperty(
+			"--life-grid-toggle-button-font-size"
+		),
+		jsonContainerMarginTop: getCSSCustomProperty(
+			"--life-grid-json-container-margin-top"
+		),
+		jsonTextareaFontSize: getCSSCustomProperty(
+			"--life-grid-json-textarea-font-size"
 		),
 
 		// Year Header Styling

@@ -1,6 +1,9 @@
 import { App, PluginSettingTab, Setting, Plugin } from "obsidian";
-import { getLifeGridCSSProperties } from "../utils/cssUtils";
-import type { LifeGridSettings } from "../types/Settings";
+import {
+	getLifeGridCSSProperties,
+	LifeGridCSSProperties,
+} from "../utils/cssUtils";
+import type { LifeGridSettings, LifePeriod } from "../types/Settings";
 
 interface LifeGridPlugin extends Plugin {
 	settings: LifeGridSettings;
@@ -106,7 +109,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 	private renderLifePeriodsSettings(
 		containerEl: HTMLElement,
-		css: any
+		css: LifeGridCSSProperties
 	): void {
 		// Life Periods Section
 		containerEl.createEl("h3", { text: "Life Periods" });
@@ -140,15 +143,18 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 	private renderPeriodDiv(
 		container: HTMLElement,
-		period: any,
+		period: LifePeriod,
 		index: number,
 		renderPeriods: () => void,
-		css: any
+		css: LifeGridCSSProperties
 	): void {
 		const periodDiv = container.createEl("div");
 		periodDiv.addClass("life-grid-period-div");
 		if (period.color) {
-			periodDiv.style.setProperty("--life-grid-period-label-color", period.color);
+			periodDiv.style.setProperty(
+				"--life-grid-period-label-color",
+				period.color
+			);
 		}
 
 		// Period header with label and delete button
@@ -160,10 +166,10 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 	private renderPeriodHeader(
 		periodDiv: HTMLElement,
-		period: any,
+		period: LifePeriod,
 		index: number,
 		renderPeriods: () => void,
-		css: any
+		css: LifeGridCSSProperties
 	): void {
 		const headerDiv = periodDiv.createEl("div");
 		headerDiv.addClass("life-grid-period-header");
@@ -185,7 +191,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 	private renderPeriodSettings(
 		periodDiv: HTMLElement,
-		period: any,
+		period: LifePeriod,
 		index: number,
 		renderPeriods: () => void
 	): void {
@@ -255,7 +261,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 	private renderAddPeriodButton(
 		container: HTMLElement,
 		renderPeriods: () => void,
-		css: any
+		css: LifeGridCSSProperties
 	): void {
 		const addButton = container.createEl("button");
 		addButton.textContent = "+ Add New Period";
@@ -279,7 +285,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 	private renderAdvancedJsonEditor(
 		container: HTMLElement,
 		renderPeriods: () => void,
-		css: any
+		css: LifeGridCSSProperties
 	): void {
 		const advancedDiv = container.createEl("div");
 		advancedDiv.addClass("life-grid-advanced-section");
@@ -310,7 +316,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 	private renderJsonEditor(
 		container: HTMLElement,
 		renderPeriods: () => void,
-		css: any
+		css: LifeGridCSSProperties
 	): void {
 		container.empty();
 
