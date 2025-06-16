@@ -1,12 +1,5 @@
-import {
-	TFile,
-	moment,
-	App,
-	WorkspaceLeaf,
-	MetadataCache,
-	Plugin,
-} from "obsidian";
-import * as Theme from "../gridConstants";
+import { TFile, moment, App, WorkspaceLeaf, MetadataCache } from "obsidian";
+import * as GridConfig from "../GridConfig";
 import { getLifeGridCSSProperties, LifeGridCSSProperties } from "./cssUtils";
 import { calculateAge } from "./ageUtils";
 import { getLuminance, colorToHex, getNoteColor } from "./colorUtils";
@@ -103,11 +96,11 @@ export function createLifeGridSVG(
 	const css = getLifeGridCSSProperties();
 
 	// SVG grid parameters
-	const headerSquares = Theme.HEADER_SQUARES;
+	const headerSquares = GridConfig.HEADER_SQUARES;
 	const gap = css.gap;
 	const squareSize = css.squareSize;
-	const minimapWidth = Theme.calculateMinimapWidth(squareSize, gap);
-	const minimapSpaceReserved = Theme.calculateMinimapSpaceReserved(
+	const minimapWidth = GridConfig.calculateMinimapWidth(squareSize, gap);
+	const minimapSpaceReserved = GridConfig.calculateMinimapSpaceReserved(
 		minimapWidth,
 		gap
 	);
@@ -179,7 +172,7 @@ export function createMinimapSVG(
 	} = config;
 	const css = getLifeGridCSSProperties();
 	const gap = css.gap;
-	const minimapWidth = Theme.calculateMinimapWidth(css.squareSize, gap);
+	const minimapWidth = GridConfig.calculateMinimapWidth(css.squareSize, gap);
 
 	// Create minimap SVG
 	const minimapSvg = document.createElementNS(
@@ -244,7 +237,10 @@ export function createMinimapSVG(
 			const startY =
 				minimapVerticalPadding + startProgress * usableHeight;
 			const endY = minimapVerticalPadding + endProgress * usableHeight;
-			const height = Math.max(Theme.MINIMAP_MIN_HEIGHT, endY - startY);
+			const height = Math.max(
+				GridConfig.MINIMAP_MIN_HEIGHT,
+				endY - startY
+			);
 
 			const periodRect = document.createElementNS(
 				"http://www.w3.org/2000/svg",
@@ -392,7 +388,7 @@ function renderMainGrid(
 ) {
 	const { dayToFilePath, metadataCache } = config;
 	const css = getLifeGridCSSProperties();
-	const headerSquares = Theme.HEADER_SQUARES;
+	const headerSquares = GridConfig.HEADER_SQUARES;
 	const gap = css.gap;
 	const squareSize = css.squareSize;
 
@@ -930,7 +926,8 @@ export function setupUIInteractions(
 		const normalizedColor = colorToHex(hoveredDay.color);
 		const luminanceValue = getLuminance(normalizedColor);
 		const isLight = luminanceValue > css.lightColorThreshold;
-		const isVeryDark = luminanceValue < Theme.VERY_DARK_COLOR_THRESHOLD;
+		const isVeryDark =
+			luminanceValue < GridConfig.VERY_DARK_COLOR_THRESHOLD;
 
 		// Remove existing tooltip color classes
 		tooltip.removeClass("life-grid-tooltip--light-bg");
@@ -949,11 +946,11 @@ export function setupUIInteractions(
 			const whiteLuminance = getLuminance(css.whiteColor);
 			const blackLuminance = getLuminance(css.blackColor);
 			const contrastWhite =
-				(whiteLuminance + Theme.CONTRAST_OFFSET) /
-				(luminanceValue + Theme.CONTRAST_OFFSET);
+				(whiteLuminance + GridConfig.CONTRAST_OFFSET) /
+				(luminanceValue + GridConfig.CONTRAST_OFFSET);
 			const contrastBlack =
-				(luminanceValue + Theme.CONTRAST_OFFSET) /
-				(blackLuminance + Theme.CONTRAST_OFFSET);
+				(luminanceValue + GridConfig.CONTRAST_OFFSET) /
+				(blackLuminance + GridConfig.CONTRAST_OFFSET);
 			tooltip.style.setProperty(
 				"--life-grid-tooltip-custom-bg",
 				normalizedColor
@@ -1148,7 +1145,10 @@ function setupMinimapInteractions(
 			const startY =
 				minimapVerticalPadding + startProgress * usableHeight;
 			const endY = minimapVerticalPadding + endProgress * usableHeight;
-			const height = Math.max(Theme.MINIMAP_MIN_HEIGHT, endY - startY);
+			const height = Math.max(
+				GridConfig.MINIMAP_MIN_HEIGHT,
+				endY - startY
+			);
 
 			minimapPeriods.push({
 				period,
@@ -1265,7 +1265,8 @@ function setupMinimapInteractions(
 			const isLight =
 				getLuminance(normalizedColor) > css.lightColorThreshold;
 			const isVeryDark =
-				getLuminance(normalizedColor) < Theme.VERY_DARK_COLOR_THRESHOLD;
+				getLuminance(normalizedColor) <
+				GridConfig.VERY_DARK_COLOR_THRESHOLD;
 
 			// Remove existing tooltip color classes
 			tooltipDiv.removeClass("life-grid-tooltip--light-bg");
@@ -1282,11 +1283,14 @@ function setupMinimapInteractions(
 				tooltipDiv.addClass("life-grid-tooltip--light-bg");
 			} else {
 				const contrastWhite =
-					(getLuminance(css.whiteColor) + Theme.CONTRAST_OFFSET) /
-					(getLuminance(normalizedColor) + Theme.CONTRAST_OFFSET);
+					(getLuminance(css.whiteColor) +
+						GridConfig.CONTRAST_OFFSET) /
+					(getLuminance(normalizedColor) +
+						GridConfig.CONTRAST_OFFSET);
 				const contrastBlack =
-					(getLuminance(normalizedColor) + Theme.CONTRAST_OFFSET) /
-					(getLuminance(css.blackColor) + Theme.CONTRAST_OFFSET);
+					(getLuminance(normalizedColor) +
+						GridConfig.CONTRAST_OFFSET) /
+					(getLuminance(css.blackColor) + GridConfig.CONTRAST_OFFSET);
 				tooltipDiv.style.setProperty(
 					"--life-grid-tooltip-custom-bg",
 					normalizedColor

@@ -11,7 +11,7 @@ import {
 	UIInteractionConfig,
 	setupUIInteractions,
 } from "./src/utils/renderUtils";
-import { LifeGridSettingTab } from "./src/settings/LifeGridSettingTab";
+import { LifeGridSettingTab } from "./src/LifeGridSettingTab";
 import {
 	LifeGridSettings,
 	DEFAULT_SETTINGS,

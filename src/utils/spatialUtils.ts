@@ -4,7 +4,7 @@
  * Provides efficient spatial lookup for interactive elements using a grid-based index.
  */
 
-import * as gridConstants from "../gridConstants";
+import * as GridConfig from "../GridConfig";
 
 /**
  * Represents a clickable day in the life grid with spatial coordinates.
@@ -25,7 +25,7 @@ export class SpatialIndex {
 	private index = new Map<string, ClickableDay[]>();
 	private cellSize: number;
 
-	constructor(cellSize: number = gridConstants.GRID_CELL_SIZE) {
+	constructor(cellSize: number = GridConfig.GRID_CELL_SIZE) {
 		this.cellSize = cellSize;
 	}
 

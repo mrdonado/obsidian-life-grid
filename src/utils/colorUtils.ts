@@ -4,7 +4,7 @@
  * Provides functions for color conversion, luminance calculation, and color adjustments.
  */
 
-import * as gridConstants from "../gridConstants";
+import * as GridConfig from "../GridConfig";
 
 /**
  * Calculate the luminance of a hex color using ITU-R BT.709 coefficients.
@@ -20,40 +20,40 @@ export function getLuminance(hex: string): number {
 	const r =
 		parseInt(
 			hex.substring(
-				gridConstants.HEX_RED_START,
-				gridConstants.HEX_RED_START + gridConstants.HEX_RED_LENGTH
+				GridConfig.HEX_RED_START,
+				GridConfig.HEX_RED_START + GridConfig.HEX_RED_LENGTH
 			),
 			16
-		) / gridConstants.RGB_NORMALIZE_FACTOR;
+		) / GridConfig.RGB_NORMALIZE_FACTOR;
 	const g =
 		parseInt(
 			hex.substring(
-				gridConstants.HEX_GREEN_START,
-				gridConstants.HEX_GREEN_START + gridConstants.HEX_GREEN_LENGTH
+				GridConfig.HEX_GREEN_START,
+				GridConfig.HEX_GREEN_START + GridConfig.HEX_GREEN_LENGTH
 			),
 			16
-		) / gridConstants.RGB_NORMALIZE_FACTOR;
+		) / GridConfig.RGB_NORMALIZE_FACTOR;
 	const b =
 		parseInt(
 			hex.substring(
-				gridConstants.HEX_BLUE_START,
-				gridConstants.HEX_BLUE_START + gridConstants.HEX_BLUE_LENGTH
+				GridConfig.HEX_BLUE_START,
+				GridConfig.HEX_BLUE_START + GridConfig.HEX_BLUE_LENGTH
 			),
 			16
-		) / gridConstants.RGB_NORMALIZE_FACTOR;
+		) / GridConfig.RGB_NORMALIZE_FACTOR;
 	const a = [r, g, b].map((v) =>
-		v <= gridConstants.RGB_LINEAR_THRESHOLD
-			? v / gridConstants.RGB_LINEAR_DIVISOR
+		v <= GridConfig.RGB_LINEAR_THRESHOLD
+			? v / GridConfig.RGB_LINEAR_DIVISOR
 			: Math.pow(
-					(v + gridConstants.RGB_GAMMA_OFFSET) /
-						gridConstants.RGB_GAMMA_DIVISOR,
-					gridConstants.RGB_GAMMA_EXPONENT
+					(v + GridConfig.RGB_GAMMA_OFFSET) /
+						GridConfig.RGB_GAMMA_DIVISOR,
+					GridConfig.RGB_GAMMA_EXPONENT
 			  )
 	);
 	return (
-		gridConstants.LUMINANCE_RED_COEFFICIENT * a[0] +
-		gridConstants.LUMINANCE_GREEN_COEFFICIENT * a[1] +
-		gridConstants.LUMINANCE_BLUE_COEFFICIENT * a[2]
+		GridConfig.LUMINANCE_RED_COEFFICIENT * a[0] +
+		GridConfig.LUMINANCE_GREEN_COEFFICIENT * a[1] +
+		GridConfig.LUMINANCE_BLUE_COEFFICIENT * a[2]
 	);
 }
 
