@@ -44,7 +44,7 @@ export default class LifeGridPlugin extends Plugin {
 		// Add a command to open the Life Grid view
 		this.addCommand({
 			id: "open-life-grid-view",
-			name: "Open Life Grid View",
+			name: "Open view",
 			callback: () => {
 				this.activateLifeGridViewInNewTab();
 			},
