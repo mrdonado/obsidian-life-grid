@@ -118,7 +118,6 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
   display: block;
   max-width: 100%;
   background: var(--life-grid-bg-color);
-  height: var(--life-grid-svg-height, 600px);
 }
 
 .life-grid-minimap-container {
@@ -301,4 +300,42 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
 
 .life-grid-json-textarea {
   font-size: var(--life-grid-json-textarea-font-size, 12px);
+  width: 100%;
+  font-family: monospace;
+}
+
+/* Settings panel error state */
+.life-grid-json-textarea--error {
+  border-color: var(--text-error) !important;
+  transition: border-color 0.2s ease;
+}
+
+/* Settings panel JSON container visibility */
+.life-grid-json-container--hidden {
+  display: none !important;
+}
+
+.life-grid-json-container--visible {
+  display: block !important;
+}
+
+/* Tooltip positioning and colors using CSS custom properties */
+.life-grid-tooltip {
+  left: var(--tooltip-left, 0) !important;
+  top: var(--tooltip-top, 0) !important;
+}
+
+.life-grid-tooltip--light-bg {
+  background: var(--life-grid-tooltip-bg-color) !important;
+  color: var(--tooltip-custom-color, var(--life-grid-tooltip-text-color)) !important;
+}
+
+.life-grid-tooltip--colored-bg {
+  background: var(--tooltip-custom-bg, var(--life-grid-tooltip-bg-color)) !important;
+  color: var(--tooltip-custom-color, var(--life-grid-tooltip-text-color)) !important;
+}
+
+/* Period div with dynamic color */
+.life-grid-period-div .life-grid-period-header-label {
+  color: var(--period-color, var(--text-normal));
 }

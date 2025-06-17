@@ -151,10 +151,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 		const periodDiv = container.createEl("div");
 		periodDiv.addClass("life-grid-period-div");
 		if (period.color) {
-			periodDiv.style.setProperty(
-				"--life-grid-period-label-color",
-				period.color
-			);
+			periodDiv.style.setProperty("--period-color", period.color);
 		}
 
 		// Period header with label and delete button
@@ -296,13 +293,19 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 		const jsonContainer = advancedDiv.createEl("div");
 		jsonContainer.addClass("life-grid-json-container");
-		jsonContainer.style.display = "none";
+		jsonContainer.addClass("life-grid-json-container--hidden");
 
 		let isJsonVisible = false;
 
 		toggleButton.onclick = () => {
 			isJsonVisible = !isJsonVisible;
-			jsonContainer.style.display = isJsonVisible ? "block" : "none";
+			if (isJsonVisible) {
+				jsonContainer.removeClass("life-grid-json-container--hidden");
+				jsonContainer.addClass("life-grid-json-container--visible");
+			} else {
+				jsonContainer.removeClass("life-grid-json-container--visible");
+				jsonContainer.addClass("life-grid-json-container--hidden");
+			}
 			toggleButton.textContent = isJsonVisible
 				? "▼ Advanced: Edit as JSON"
 				: "▶ Advanced: Edit as JSON";
@@ -338,19 +341,24 @@ export class LifeGridSettingTab extends PluginSettingTab {
 							this.plugin.settings.periods = parsed;
 							await this.plugin.saveSettings();
 							renderPeriods();
+							// Remove error class on successful parse
+							text.inputEl.removeClass(
+								"life-grid-json-textarea--error"
+							);
 						} catch (e) {
 							// Show error in a subtle way
-							text.inputEl.style.borderColor =
-								"var(--text-error)";
+							text.inputEl.addClass(
+								"life-grid-json-textarea--error"
+							);
 							setTimeout(() => {
-								text.inputEl.style.borderColor = "";
+								text.inputEl.removeClass(
+									"life-grid-json-textarea--error"
+								);
 							}, 2000);
 						}
 					});
 				text.inputEl.rows = 8;
 				text.inputEl.addClass("life-grid-json-textarea");
-				text.inputEl.style.width = "100%";
-				text.inputEl.style.fontFamily = "monospace";
 			});
 	}
 }

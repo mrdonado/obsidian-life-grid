@@ -120,7 +120,6 @@ export function createLifeGridSVG(
 	svg.setAttribute("width", width.toString());
 	svg.setAttribute("height", height.toString());
 	svg.addClass("life-grid-svg");
-	svg.style.setProperty("--life-grid-svg-height", height + "px");
 	svg.tabIndex = 0;
 
 	// Build paint array
@@ -862,17 +861,17 @@ export function setupUIInteractions(
 				if (e.clientX > svgMidX) {
 					const tooltipWidth = 200;
 					currentTooltip.style.setProperty(
-						"--life-grid-tooltip-left",
+						"--tooltip-left",
 						e.clientX - tooltipWidth - 16 + "px"
 					);
 				} else {
 					currentTooltip.style.setProperty(
-						"--life-grid-tooltip-left",
+						"--tooltip-left",
 						e.clientX + 12 + "px"
 					);
 				}
 				currentTooltip.style.setProperty(
-					"--life-grid-tooltip-top",
+					"--tooltip-top",
 					e.clientY + 8 + "px"
 				);
 			}
@@ -938,7 +937,7 @@ export function setupUIInteractions(
 			tooltip.addClass("life-grid-tooltip--very-dark");
 		} else if (isLight) {
 			tooltip.style.setProperty(
-				"--life-grid-tooltip-custom-color",
+				"--tooltip-custom-color",
 				normalizedColor
 			);
 			tooltip.addClass("life-grid-tooltip--light-bg");
@@ -951,37 +950,28 @@ export function setupUIInteractions(
 			const contrastBlack =
 				(luminanceValue + GridConfig.CONTRAST_OFFSET) /
 				(blackLuminance + GridConfig.CONTRAST_OFFSET);
+			tooltip.style.setProperty("--tooltip-custom-bg", normalizedColor);
 			tooltip.style.setProperty(
-				"--life-grid-tooltip-custom-bg",
-				normalizedColor
-			);
-			tooltip.style.setProperty(
-				"--life-grid-tooltip-custom-color",
+				"--tooltip-custom-color",
 				contrastWhite >= contrastBlack ? css.whiteColor : css.blackColor
 			);
 			tooltip.addClass("life-grid-tooltip--colored-bg");
 		}
 
-		// Position tooltip
+		// Position tooltip using CSS custom properties
 		const svgMidX = rect.left + rect.width / 2;
 		if (e.clientX > svgMidX) {
 			const tooltipWidth = 200;
 			tooltip.style.setProperty(
-				"--life-grid-tooltip-left",
+				"--tooltip-left",
 				e.clientX - tooltipWidth - 16 + "px"
 			);
 			tooltip.addClass("life-grid-tooltip--left");
 		} else {
-			tooltip.style.setProperty(
-				"--life-grid-tooltip-left",
-				e.clientX + 12 + "px"
-			);
+			tooltip.style.setProperty("--tooltip-left", e.clientX + 12 + "px");
 			tooltip.addClass("life-grid-tooltip--right");
 		}
-		tooltip.style.setProperty(
-			"--life-grid-tooltip-top",
-			e.clientY + 8 + "px"
-		);
+		tooltip.style.setProperty("--tooltip-top", e.clientY + 8 + "px");
 
 		document.body.appendChild(tooltip);
 		currentTooltip = tooltip;
@@ -1027,7 +1017,8 @@ export function setupUIInteractions(
 						currentTooltip.remove();
 						currentTooltip = null;
 						lastHoveredDay = null;
-						svg.style.cursor = "default";
+						svg.removeClass("life-grid-cursor-pointer");
+						svg.addClass("life-grid-cursor-default");
 					}
 
 					const filePath = dayToFilePath[day.date];
@@ -1277,7 +1268,7 @@ function setupMinimapInteractions(
 				tooltipDiv.addClass("life-grid-tooltip--very-dark");
 			} else if (isLight) {
 				tooltipDiv.style.setProperty(
-					"--life-grid-tooltip-custom-color",
+					"--tooltip-custom-color",
 					normalizedColor
 				);
 				tooltipDiv.addClass("life-grid-tooltip--light-bg");
@@ -1292,11 +1283,11 @@ function setupMinimapInteractions(
 						GridConfig.CONTRAST_OFFSET) /
 					(getLuminance(css.blackColor) + GridConfig.CONTRAST_OFFSET);
 				tooltipDiv.style.setProperty(
-					"--life-grid-tooltip-custom-bg",
+					"--tooltip-custom-bg",
 					normalizedColor
 				);
 				tooltipDiv.style.setProperty(
-					"--life-grid-tooltip-custom-color",
+					"--tooltip-custom-color",
 					contrastWhite >= contrastBlack
 						? css.whiteColor
 						: css.blackColor
@@ -1312,13 +1303,10 @@ function setupMinimapInteractions(
 
 		// Position tooltip
 		tooltipDiv.style.setProperty(
-			"--life-grid-tooltip-left",
+			"--tooltip-left",
 			e.clientX - (tooltipDiv.offsetWidth || 200) - 16 + "px"
 		);
-		tooltipDiv.style.setProperty(
-			"--life-grid-tooltip-top",
-			e.clientY + 8 + "px"
-		);
+		tooltipDiv.style.setProperty("--tooltip-top", e.clientY + 8 + "px");
 		tooltipDiv.addClass("life-grid-tooltip--left");
 	};
 
