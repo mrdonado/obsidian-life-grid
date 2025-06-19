@@ -1,7 +1,7 @@
 {
 	"id": "life-grid",
 	"name": "Life Grid",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"minAppVersion": "0.15.0",
 	"description": "Visualize your entire life as an interactive grid, where each dot represents a day. Highlight notes, life periods, and milestones to reflect on your past, track your present, and plan your future.",
 	"author": "F. Javier R. Donado",
