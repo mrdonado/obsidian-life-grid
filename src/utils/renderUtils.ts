@@ -861,17 +861,17 @@ export function setupUIInteractions(
 				if (e.clientX > svgMidX) {
 					const tooltipWidth = 200;
 					currentTooltip.style.setProperty(
-						"--tooltip-left",
+						"--life-grid-tooltip-left",
 						e.clientX - tooltipWidth - 16 + "px"
 					);
 				} else {
 					currentTooltip.style.setProperty(
-						"--tooltip-left",
+						"--life-grid-tooltip-left",
 						e.clientX + 12 + "px"
 					);
 				}
 				currentTooltip.style.setProperty(
-					"--tooltip-top",
+					"--life-grid-tooltip-top",
 					e.clientY + 8 + "px"
 				);
 			}
@@ -963,15 +963,21 @@ export function setupUIInteractions(
 		if (e.clientX > svgMidX) {
 			const tooltipWidth = 200;
 			tooltip.style.setProperty(
-				"--tooltip-left",
+				"--life-grid-tooltip-left",
 				e.clientX - tooltipWidth - 16 + "px"
 			);
 			tooltip.addClass("life-grid-tooltip--left");
 		} else {
-			tooltip.style.setProperty("--tooltip-left", e.clientX + 12 + "px");
+			tooltip.style.setProperty(
+				"--life-grid-tooltip-left",
+				e.clientX + 12 + "px"
+			);
 			tooltip.addClass("life-grid-tooltip--right");
 		}
-		tooltip.style.setProperty("--tooltip-top", e.clientY + 8 + "px");
+		tooltip.style.setProperty(
+			"--life-grid-tooltip-top",
+			e.clientY + 8 + "px"
+		);
 
 		document.body.appendChild(tooltip);
 		currentTooltip = tooltip;
@@ -1303,10 +1309,13 @@ function setupMinimapInteractions(
 
 		// Position tooltip
 		tooltipDiv.style.setProperty(
-			"--tooltip-left",
+			"--life-grid-tooltip-left",
 			e.clientX - (tooltipDiv.offsetWidth || 200) - 16 + "px"
 		);
-		tooltipDiv.style.setProperty("--tooltip-top", e.clientY + 8 + "px");
+		tooltipDiv.style.setProperty(
+			"--life-grid-tooltip-top",
+			e.clientY + 8 + "px"
+		);
 		tooltipDiv.addClass("life-grid-tooltip--left");
 	};
 

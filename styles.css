@@ -321,8 +321,8 @@ All styles have been moved from JavaScript to CSS for better theme compatibility
 
 /* Tooltip positioning and colors using CSS custom properties */
 .life-grid-tooltip {
-  left: var(--tooltip-left, 0) !important;
-  top: var(--tooltip-top, 0) !important;
+  left: var(--life-grid-tooltip-left, 0) !important;
+  top: var(--life-grid-tooltip-top, 0) !important;
 }
 
 .life-grid-tooltip--light-bg {
