@@ -51,7 +51,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 		// Add a setting for maximum age
 		new Setting(containerEl)
-			.setName("Maximum Age")
+			.setName("Maximum age")
 			.setDesc("Maximum age to display in the life grid (in years).")
 			.addText((text) => {
 				text.setPlaceholder("95")
@@ -68,14 +68,14 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 	private renderDailyNotesSettings(containerEl: HTMLElement): void {
 		// Daily Notes Section
-		containerEl.createEl("h3", { text: "Daily Notes Configuration" });
+		new Setting(containerEl).setName("Daily notes").setHeading();
 		containerEl.createEl("p", {
 			text: "Configure how daily notes are detected and created. These settings should match your Obsidian daily notes plugin configuration.",
 		});
 
 		// Daily notes format setting
 		new Setting(containerEl)
-			.setName("Daily Note Format")
+			.setName("Daily note format")
 			.setDesc(
 				"Date format pattern for daily note filenames (e.g., YYYY-MM-DD, YYYY_MM_DD, DD-MM-YYYY)"
 			)
@@ -93,7 +93,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 		// Daily notes folder setting
 		new Setting(containerEl)
-			.setName("Daily Notes Folder")
+			.setName("Daily notes folder")
 			.setDesc(
 				"Folder path where daily notes are stored. Leave empty for vault root, or specify folder like 'Daily Notes' or 'Journal/Daily'. The plugin will search this folder and all subfolders for daily notes."
 			)
@@ -112,7 +112,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 		css: LifeGridCSSProperties
 	): void {
 		// Life Periods Section
-		containerEl.createEl("h3", { text: "Life Periods" });
+		new Setting(containerEl).setName("Life periods").setHeading();
 		containerEl.createEl("p", {
 			text: "Define colored periods for your life grid. Each period will color the background of days within that date range.",
 		});
@@ -210,7 +210,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 		// Start date setting
 		new Setting(periodDiv)
-			.setName("Start Date")
+			.setName("Start date")
 			.setDesc("When this period begins (YYYY-MM-DD)")
 			.addText((text) => {
 				text.setPlaceholder("YYYY-MM-DD")
@@ -225,7 +225,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 
 		// End date setting
 		new Setting(periodDiv)
-			.setName("End Date")
+			.setName("End date")
 			.setDesc(
 				"When this period ends (YYYY-MM-DD). Leave empty or use 'present' for ongoing periods."
 			)
@@ -261,7 +261,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 		css: LifeGridCSSProperties
 	): void {
 		const addButton = container.createEl("button");
-		addButton.textContent = "+ Add New Period";
+		addButton.textContent = "+ Add new period";
 		addButton.className = "mod-cta";
 		addButton.addClass("life-grid-add-button");
 		addButton.onclick = async () => {
@@ -324,7 +324,7 @@ export class LifeGridSettingTab extends PluginSettingTab {
 		container.empty();
 
 		new Setting(container)
-			.setName("JSON Configuration")
+			.setName("JSON configuration")
 			.setDesc("Edit periods as JSON (for advanced users)")
 			.addTextArea((text) => {
 				text.setPlaceholder("[]")
